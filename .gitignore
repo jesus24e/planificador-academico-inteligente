@@ -19,7 +19,7 @@ migrate_working_dir/
 .idea/
 
 # VS Code
-#.vscode/
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -52,3 +52,17 @@ ios/Pods/
 ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
+
+# Generated plugin registrant (Flutter)
+**/generated_plugin_registrant.*
+**/GeneratedPluginRegistrant.*
+
+# Linux / Windows / macOS generated files
+linux/flutter/generated_plugin_registrant.*
+windows/flutter/generated_plugin_registrant.*
+macos/Flutter/GeneratedPluginRegistrant.*
+
+# Backup / temp files
+*.bak
+*.tmp
+*.temp
