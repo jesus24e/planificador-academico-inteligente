@@ -12,7 +12,7 @@ Widget buildCardsRow() {
   );
 }
 
-Widget buildCard(label, value) {
+Widget buildCard(String label, String value) {
   return Container(
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(10),
@@ -24,7 +24,7 @@ Widget buildCard(label, value) {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(label, textAlign: TextAlign.center),
-        Text(value, textAlign: TextAlign.center),
+        Text(value, textAlign: TextAlign.center,style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
       ],
     ),
   );

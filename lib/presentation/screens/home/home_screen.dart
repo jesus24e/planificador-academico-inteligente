@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:planificador_academico_inteligente/presentation/widgets/home/cardsRow.dart';
 import 'package:planificador_academico_inteligente/presentation/widgets/home/header.dart';
+import 'package:planificador_academico_inteligente/presentation/widgets/home/priorityList.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,8 +32,12 @@ class _HomeScreenState extends State<HomeScreen> {
             buildHeader(),
             const SizedBox(height: 16),
             _buildWeekcalendar(),
-            const SizedBox(height: 16),
-            buildCardsRow()
+            const SizedBox(height: 20),
+            buildCardsRow(),
+            const SizedBox(height: 20),
+            buildPrioritiesList(),
+            const SizedBox(height: 15),
+            buildAddTaskBtn(),
           ],
         ),
       ),
@@ -50,10 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
         availableCalendarFormats: {CalendarFormat.twoWeeks: 'semana'},
         locale: 'es_ES',
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-        onDaySelected: (selectedDay, focusedDay) {setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-        });},
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        },
         onPageChanged: (focusedDay) {
           _focusedDay = focusedDay;
         },
@@ -61,6 +68,22 @@ class _HomeScreenState extends State<HomeScreen> {
         rowHeight: 60,
         calendarStyle: CalendarStyle(),
         headerStyle: HeaderStyle(titleCentered: true),
+      ),
+    );
+  }
+
+  Widget buildAddTaskBtn() {
+    return Container(
+      alignment: Alignment.centerRight,
+      child: FilledButton(
+        onPressed: () => Null,//TODO:hacer que la funcion agregue una tarea a la lista y despues setstate para actualizar
+        style: FilledButton.styleFrom(
+          backgroundColor: Colors.green,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadiusGeometry.circular(10),
+          ),
+        ),
+        child: Text("Añadir tarea"),
       ),
     );
   }
