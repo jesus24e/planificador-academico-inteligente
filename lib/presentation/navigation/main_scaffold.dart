@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/presentation/screens/actividades/activities_screen.dart';
 import '../screens/home/home_screen.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -9,19 +10,20 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  int _currentIndex = 0; // todo:cambiaar el index al correcto cuando se tengan todas las pantallas
+  int _currentIndex =
+      0; // todo:cambiaar el index al correcto cuando se tengan todas las pantallas
 
   final List<Widget> _screens = const [
+    Scaffold(body: Center(child: Text("en construccion"))),
+    ActivitieScreen(),
     HomeScreen(),
+    Scaffold(body: Center(child: Text("en construccion"))),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -34,7 +36,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book_outlined),
             activeIcon: Icon(Icons.book),
-            label: 'Materias',
+            label: 'Actividades',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
