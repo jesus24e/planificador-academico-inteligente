@@ -19,7 +19,6 @@ class MateriaCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,8 +76,6 @@ class MateriaCard extends StatelessWidget {
               ),
             ],
           ),
-
-          const Spacer(),
 
           //* Botones editar y eliminar
           Row(

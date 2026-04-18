@@ -46,13 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWeekcalendar() {
     return Container(
-      color: const Color.fromARGB(255, 223, 223, 223),
+      color: Colors.transparent,
       child: TableCalendar(
         focusedDay: _focusedDay,
         firstDay: DateTime.utc(2025, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),
         calendarFormat: CalendarFormat.twoWeeks,
-        availableCalendarFormats: {CalendarFormat.twoWeeks: 'semana'},
         locale: 'es_ES',
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
         onDaySelected: (selectedDay, focusedDay) {
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
         startingDayOfWeek: StartingDayOfWeek.monday,
         rowHeight: 60,
         calendarStyle: CalendarStyle(),
-        headerStyle: HeaderStyle(titleCentered: true),
+        headerStyle: HeaderStyle(titleCentered: true,formatButtonVisible: false),
       ),
     );
   }

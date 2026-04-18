@@ -32,6 +32,7 @@ class TareaItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: EdgeInsets.symmetric(vertical: 8,horizontal: 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,

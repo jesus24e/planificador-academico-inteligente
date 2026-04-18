@@ -41,21 +41,16 @@ class MateriasTab extends StatelessWidget {
 
           // *Grid de materias
           Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2 columnas como el wireframe
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.2,
-              ),
-              itemCount: 5, // placeholder
-              itemBuilder: (context, index) {
-                return const MateriaCard(
+            child: ListView.builder(
+              itemCount: 5,
+              itemBuilder: (_, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: MateriaCard(
                   nombre: 'Bases de datos',
                   profesor: 'GALLO',
                   horario: 'Lun/Mié 10:00am',
-                );
-              },
+                ),
+              ),
             ),
           ),
         ],
