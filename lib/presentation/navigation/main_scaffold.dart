@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planificador_academico_inteligente/presentation/screens/actividades/activities_screen.dart';
+import 'package:planificador_academico_inteligente/presentation/screens/calendario/calendar_screen.dart';
 import '../screens/home/home_screen.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -10,14 +11,13 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  int _currentIndex =
-      0; // todo:cambiaar el index al correcto cuando se tengan todas las pantallas
+  int _currentIndex =2;
 
   final List<Widget> _screens = const [
-    Scaffold(body: Center(child: Text("en construccion"))),
+    CalendarScreen(),
     ActivitieScreen(),
     HomeScreen(),
-    Scaffold(body: Center(child: Text("en construccion"))),
+    Scaffold(body: Center(child: Text("ajustes en construccion"))),
   ];
 
   @override
