@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:planificador_academico_inteligente/presentation/widgets/actividades/materias_tab.dart';
-import 'package:planificador_academico_inteligente/presentation/widgets/actividades/tareas_tab.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/actividades/materias_tab.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/actividades/tareas_tab.dart';
 
 class ActivitieScreen extends StatelessWidget {  // ← StatelessWidget, ya no StatefulWidget
   const ActivitieScreen({super.key});

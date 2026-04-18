@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planificador_academico_inteligente/core/theme/app_theme.dart';
-import 'package:planificador_academico_inteligente/presentation/navigation/main_scaffold.dart';
+import 'package:planificador_academico_inteligente/ui/navigation/main_scaffold.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

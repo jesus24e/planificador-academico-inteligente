@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:planificador_academico_inteligente/presentation/screens/actividades/activities_screen.dart';
-import 'package:planificador_academico_inteligente/presentation/screens/calendario/calendar_screen.dart';
+import 'package:planificador_academico_inteligente/ui/screens/actividades/activities_screen.dart';
+import 'package:planificador_academico_inteligente/ui/screens/calendario/calendar_screen.dart';
 import '../screens/home/home_screen.dart';
 
 class MainScaffold extends StatefulWidget {

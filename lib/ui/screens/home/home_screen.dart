@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:planificador_academico_inteligente/presentation/widgets/home/cardsRow.dart';
-import 'package:planificador_academico_inteligente/presentation/widgets/home/header.dart';
-import 'package:planificador_academico_inteligente/presentation/widgets/home/priorityList.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/home/cardsRow.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/home/header.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/home/priorityList.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomeScreen extends StatefulWidget {

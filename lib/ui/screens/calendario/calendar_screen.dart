@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planificador_academico_inteligente/entities/activity.dart';
-import 'package:planificador_academico_inteligente/presentation/widgets/calendario/activityCard.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/calendario/activityCard.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -138,6 +138,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         },
         eventLoader: _getEventosDelDia,
         headerStyle: HeaderStyle(formatButtonVisible: false, titleCentered: true),
+        locale: "es_ES",
+        startingDayOfWeek: StartingDayOfWeek.monday,
       ),
     );
   }
