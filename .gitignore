@@ -66,3 +66,6 @@ macos/Flutter/GeneratedPluginRegistrant.*
 *.bak
 *.tmp
 *.temp
+
+# CMake generated
+**/generated_plugins.cmake
