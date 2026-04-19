@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planificador_academico_inteligente/ui/screens/actividades/activities_screen.dart';
+import 'package:planificador_academico_inteligente/ui/screens/ajustes/settings_screen.dart';
 import 'package:planificador_academico_inteligente/ui/screens/calendario/calendar_screen.dart';
 import '../screens/home/home_screen.dart';
 
@@ -17,7 +18,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     CalendarScreen(),
     ActivitieScreen(),
     HomeScreen(),
-    Scaffold(body: Center(child: Text("ajustes en construccion"))),
+    SettingsScreen(),
   ];
 
   @override
