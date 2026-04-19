@@ -36,6 +36,7 @@ class ActivityCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.grey,blurRadius: 2)]
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

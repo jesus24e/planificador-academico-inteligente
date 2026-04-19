@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/core/simulations/actividades_sim.dart';
+import 'package:planificador_academico_inteligente/entities/activity.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/home/cardsRow.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/home/header.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/home/priorityList.dart';
@@ -15,11 +17,12 @@ class _HomeScreenState extends State<HomeScreen> {
   //*variables para el calendario de la semana
 
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+  Map<DateTime, List<Activity>> eventosCalendario = {};
+
   @override
   void initState() {
     super.initState();
-    _selectedDay = _focusedDay;
+    eventosCalendario = mapDateActivity;
   }
 
   Widget build(BuildContext context) {
@@ -46,36 +49,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWeekcalendar() {
     return Container(
-      color: Colors.transparent,
+      padding: EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 8)],
+        borderRadius: BorderRadius.circular(12),
+      ),
+
       child: TableCalendar(
         focusedDay: _focusedDay,
         firstDay: DateTime.utc(2025, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),
         calendarFormat: CalendarFormat.twoWeeks,
         locale: 'es_ES',
-        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-        },
         onPageChanged: (focusedDay) {
           _focusedDay = focusedDay;
         },
         startingDayOfWeek: StartingDayOfWeek.monday,
         rowHeight: 60,
-        calendarStyle: CalendarStyle(),
-        headerStyle: HeaderStyle(titleCentered: true,formatButtonVisible: false),
+        calendarStyle: CalendarStyle(
+          markerDecoration: BoxDecoration(
+            color: Colors.redAccent,
+            shape: BoxShape.circle,
+          ),
+        ),
+        headerStyle: HeaderStyle(
+          titleCentered: true,
+          formatButtonVisible: false,
+        ),
+        eventLoader: _getEventosDelDia,
       ),
     );
+  }
+
+  List<Activity> _getEventosDelDia(DateTime day) {
+    final key = DateTime.utc(day.year, day.month, day.day);
+    return eventosCalendario[key] ?? [];
   }
 
   Widget buildAddTaskBtn() {
     return Container(
       alignment: Alignment.centerRight,
       child: FilledButton(
-        onPressed: () => Null,//TODO:hacer que la funcion agregue una tarea a la lista y despues setstate para actualizar
+        onPressed: () =>
+            Null, //TODO:hacer que la funcion agregue una tarea a la lista y despues setstate para actualizar
         style: FilledButton.styleFrom(
           backgroundColor: Colors.green,
           shape: RoundedRectangleBorder(
