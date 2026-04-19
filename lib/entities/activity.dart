@@ -1,4 +1,5 @@
 class Activity {
+  final int? id;
   final String nombre;
   final String materia;
   final String tipo;
@@ -9,6 +10,7 @@ class Activity {
   
 
   Activity({
+    required this.id,
     required this.nombre,
     required this.materia,
     required this.tipo,
