@@ -1,38 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/entities/activity.dart';
 
 class TareaItem extends StatelessWidget {
-  final String tipo;
-  final String materia;
-  final String nombre;
-  final String fecha;
-  final String? horasDia;
-  final int prioridad;
+  final Activity activity;
 
-  const TareaItem({
-    super.key,
-    required this.tipo,
-    required this.materia,
-    required this.nombre,
-    required this.fecha,
-    this.horasDia,
-    required this.prioridad,
-  });
+  const TareaItem({super.key, required this.activity});
 
   Color get _colorPrioridad {
-    switch (prioridad) {
-      case 1:
-        return Colors.redAccent;
-      case 2:
-        return Colors.amberAccent;
-      default:
-        return Colors.greenAccent;
+    switch (activity.prioridad) {
+      case 'alta': return Colors.redAccent;
+      case 'media': return Colors.amberAccent;
+      default: return Colors.greenAccent;
     }
+  }
+
+  String get _fechaFormateada {
+    const meses = ['ene','feb','mar','abr','may','jun',
+                    'jul','ago','sep','oct','nov','dic'];
+    final fechaLim = activity.fechaLimite;
+    return '${fechaLim.day} ${meses[fechaLim.month - 1]} ${fechaLim.year}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 8,horizontal: 4),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -51,46 +43,28 @@ class TareaItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-
-          // Contenido
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Chips tipo y materia
                 Row(
                   children: [
-                    _buildMiniLabel(tipo),
+                    _buildMiniLabel(activity.tipo),
                     const SizedBox(width: 6),
-                    _buildMiniLabel(materia),
+                    _buildMiniLabel(activity.materia),
                   ],
                 ),
                 const SizedBox(height: 6),
-
-                // Nombre
-                Text(
-                  nombre,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
+                Text(activity.nombre,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-
-                // Fecha + horas (horas es opcional)
                 Text(
-                  'vence: $fecha${horasDia != null ? ' │ $horasDia hrs/día' : ''}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
+                  'vence: $_fechaFormateada${activity.horasDedicadas > 0 ? ' │ ${activity.horasDedicadas} hrs' : ''}',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
               ],
             ),
           ),
-
-          // * Botón eliminar
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
@@ -110,10 +84,7 @@ class TareaItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-      ),
+      child: Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
     );
   }
 }

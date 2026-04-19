@@ -14,15 +14,6 @@ class ActivityCard extends StatelessWidget {
     }
   }
 
-  Color _dotColor() {
-    switch (activity.tipo) {
-      case 'examen': return Colors.red;
-      case 'proyecto': return Colors.blue;
-      case 'tarea': return Colors.orange;
-      default: return Colors.green;
-    }
-  }
-
   String _formatFecha(DateTime fecha) {
     const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     return '${fecha.day} ${meses[fecha.month - 1]} ${fecha.year}';
@@ -46,7 +37,7 @@ class ActivityCard extends StatelessWidget {
               Container(
                 width: 12, height: 12,
                 decoration: BoxDecoration(
-                  color: _dotColor(),
+                  color: _prioridadColor(),
                   shape: BoxShape.circle,
                 ),
               ),

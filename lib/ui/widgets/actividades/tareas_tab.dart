@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/core/simulations/actividades_sim.dart';
+import 'package:planificador_academico_inteligente/core/utils/activity_utils.dart';
 import 'tarea_item.dart';
 
 class TareasTab extends StatefulWidget {
@@ -11,6 +13,7 @@ class TareasTab extends StatefulWidget {
 class _TareasTabState extends State<TareasTab> {
   String _filtroTipo = 'Tipo';
   String _filtroMateria = 'Materia';
+  final sortedList = sortByPriority(activityList);
 
   @override
   Widget build(BuildContext context) {
@@ -54,41 +57,7 @@ class _TareasTabState extends State<TareasTab> {
           // *Lista de tareas
           Expanded(
             child: ListView(
-              children: [
-                TareaItem(
-                  tipo: "proyecto",
-                  nombre:
-                      "aplicacion de organizacion academica inteligente, proyecto final de la materia",
-                  materia: "programacion movil",
-                  fecha: "jueves 7 de mayo",
-                  horasDia: "5",
-                  prioridad: 1,
-                ),
-                TareaItem(
-                  tipo: "examen",
-                  nombre: "primer examen de bd2",
-                  materia: "bases de datos 2",
-                  fecha: "Martes 14 de abril",
-                  horasDia: "2",
-                  prioridad: 2,
-                ),
-                TareaItem(
-                  tipo: "tarea",
-                  nombre: "comentario de articulo 10",
-                  materia: "redes de computadoras 2",
-                  fecha: "Martes 12 de mayo",
-                  horasDia: "2",
-                  prioridad: 3,
-                ),
-                TareaItem(
-                  tipo: "tarea",
-                  nombre: "ejemplo de factura cfdi",
-                  materia: "Habilidades directivas",
-                  fecha: "miercoles 8 de abril",
-                  horasDia: "1",
-                  prioridad: 3,
-                ),
-              ],
+              children: [...sortedList.map((e) => TareaItem(activity: e))],
             ),
           ),
         ],

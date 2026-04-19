@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/core/simulations/actividades_sim.dart';
+import 'package:planificador_academico_inteligente/core/utils/activity_utils.dart';
+import 'package:planificador_academico_inteligente/entities/activity.dart';
+
+final sortedList = sortByPriority(activityList);
 
 Column buildPrioritiesList() {
   return Column(
@@ -23,39 +28,7 @@ Column buildPrioritiesList() {
         child: Expanded(
           child: ListView(
             children: [
-              buildPriorityItem(
-                tipo: "proyecto",
-                nombre:
-                    "aplicacion de organizacion academica inteligente, proyecto final de la materia",
-                materia: "programacion movil",
-                fechaLimite: "jueves 7 de mayo",
-                horasDedicadas: "5",
-                prioridad: 1,
-              ),
-              buildPriorityItem(
-                tipo: "examen",
-                nombre: "primer examen de bd2",
-                materia: "bases de datos 2",
-                fechaLimite: "Martes 14 de abril",
-                horasDedicadas: "2",
-                prioridad: 2,
-              ),
-              buildPriorityItem(
-                tipo: "tarea",
-                nombre: "comentario de articulo 10",
-                materia: "redes de computadoras 2",
-                fechaLimite: "Martes 12 de mayo",
-                horasDedicadas: "2",
-                prioridad: 3,
-              ),
-              buildPriorityItem(
-                tipo: "tarea",
-                nombre: "ejemplo de factura cfdi",
-                materia: "Habilidades directivas",
-                fechaLimite: "miercoles 8 de abril",
-                horasDedicadas: "1",
-                prioridad: 3,
-              ),
+              ...sortedList.map((a) => buildPriorityItem(a))
             ],
           ),
         ),
@@ -64,94 +37,97 @@ Column buildPrioritiesList() {
   );
 }
 
-Container buildPriorityItem({
-  required String tipo,
-  required String materia,
-  required String nombre,
-  required String fechaLimite,
-  String? horasDedicadas,
-  required int prioridad,
-}) {
+Widget buildPriorityItem(Activity activity) {
+  final colores = {
+    'alta': Colors.red,
+    'media': Colors.orange,
+    'baja': Colors.green,
+  };
+  final color = colores[activity.prioridad] ?? Colors.grey;
+
   return Container(
-    margin: EdgeInsets.symmetric(vertical: 8),
-    padding: EdgeInsets.symmetric(vertical: 15),
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      border: BoxBorder.all(color: Colors.black38),
+      boxShadow: [
+        BoxShadow(color: Colors.black26, blurRadius: 6),
+      ],
+      border: Border(left: BorderSide(color: color, width: 3)),
     ),
-    child: Row(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(color: _getBarColor(prioridad), width: 6, height: 64),
-        SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  //*etiqueta tipo de tarea -----------------------------------------------------------------
-                  Container(
-                    width: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: BoxBorder.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 6),
-                    child: Text(
-                      tipo,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  //*----------------------------------------------------------------------------------------
-                  const SizedBox(width: 10),
-                  //*etiqueta materia -----------------------------------------------------------------------
-                  Text(materia, style: TextStyle(fontWeight: FontWeight.bold)),
-                  //*----------------------------------------------------------------------------------------
-                ],
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
               ),
-              const SizedBox(height: 18),
-              //* etiqueta nombre de la tarea----------------------------------------------------------------
-              Text(nombre),
-
-              //*--------------------------------------------------------------------------------------------
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  //* etiqueta fecha limite de la tarea------------------------------------------------------
-                  Text(
-                    "vence: $fechaLimite",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    width: 1,
-                    color: Colors.black,
-                    padding: EdgeInsets.symmetric(vertical: 5),
-                    margin: EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                  //* etiqueta horas dedicadas a la tarea------------------------------------------------------
-                  if (horasDedicadas != null)
-                    Text(
-                      "$horasDedicadas ${int.parse(horasDedicadas) > 1 ? 'hrs' : 'hr'}",
-                    ),
-                ],
+              child: Text(
+                activity.tipo,
+                style: TextStyle(fontSize: 11, color: color),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              activity.materia,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          activity.nombre,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Text(
+              'vence: ${_formatFecha(activity.fechaLimite)}',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            ),
+            const Text('  |  ', style: TextStyle(color: Color(0xFF6B7280))),
+            Text(
+              '${activity.horasDedicadas} hrs',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            ),
+          ],
         ),
       ],
     ),
   );
 }
 
-Color _getBarColor(int prioridad) {
-  if (prioridad == 1) {
-    return Colors.redAccent;
-  } else if (prioridad == 2) {
-    return Colors.amberAccent;
-  } else {
-    return Colors.greenAccent;
-  }
+String _formatFecha(DateTime fecha) {
+  const dias = [
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+    'domingo',
+  ];
+  const meses = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+  return '${dias[fecha.weekday - 1]} ${fecha.day} de ${meses[fecha.month - 1]}';
 }
