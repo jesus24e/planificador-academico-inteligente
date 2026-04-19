@@ -13,8 +13,7 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   DateTime.utc(2026, 5, 7): [
     Activity(
       tipo: "proyecto",
-      nombre:
-          "aplicacion de organizacion academica inteligente, proyecto final de la materia",
+      nombre: "aplicacion de organizacion academica inteligente, proyecto final de la materia",
       materia: "programacion movil",
       fechaLimite: DateTime.utc(2026, 5, 7),
       horasDedicadas: 5,
@@ -59,9 +58,105 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
       prioridad: "media",
     ),
   ],
+  DateTime.utc(2026, 4, 22): [
+    Activity(
+      tipo: "tarea",
+      nombre: "practica de laboratorio 3",
+      materia: "redes de computadoras 2",
+      fechaLimite: DateTime.utc(2026, 4, 22),
+      horasDedicadas: 3,
+      prioridad: "baja",
+    ),
+  ],
+  DateTime.utc(2026, 4, 28): [
+    Activity(
+      tipo: "examen",
+      nombre: "examen parcial de redes",
+      materia: "redes de computadoras 2",
+      fechaLimite: DateTime.utc(2026, 4, 28),
+      horasDedicadas: 4,
+      prioridad: "alta",
+    ),
+    Activity(
+      tipo: "tarea",
+      nombre: "resumen capitulo 5 de sistemas operativos",
+      materia: "sistemas operativos",
+      fechaLimite: DateTime.utc(2026, 4, 28),
+      horasDedicadas: 1,
+      prioridad: "baja",
+    ),
+  ],
+  DateTime.utc(2026, 5, 3): [
+    Activity(
+      tipo: "proyecto",
+      nombre: "prototipo de interfaz para proyecto de movil",
+      materia: "programacion movil",
+      fechaLimite: DateTime.utc(2026, 5, 3),
+      horasDedicadas: 6,
+      prioridad: "alta",
+    ),
+  ],
+  DateTime.utc(2026, 5, 19): [
+    Activity(
+      tipo: "tarea",
+      nombre: "ejercicios de normalizacion",
+      materia: "bases de datos 2",
+      fechaLimite: DateTime.utc(2026, 5, 19),
+      horasDedicadas: 2,
+      prioridad: "media",
+    ),
+  ],
 };
 
 final List<Activity> activityList = [
+  Activity(
+    tipo: "tarea",
+    nombre: "comentario de articulo 10",
+    materia: "redes de computadoras 2",
+    fechaLimite: DateTime.utc(2026, 5, 12),
+    horasDedicadas: 2,
+    prioridad: "media",
+  ),
+  Activity(
+    tipo: "examen",
+    nombre: "examen parcial de redes",
+    materia: "redes de computadoras 2",
+    fechaLimite: DateTime.utc(2026, 4, 28),
+    horasDedicadas: 4,
+    prioridad: "alta",
+  ),
+  Activity(
+    tipo: "tarea",
+    nombre: "resumen capitulo 5 de sistemas operativos",
+    materia: "sistemas operativos",
+    fechaLimite: DateTime.utc(2026, 4, 28),
+    horasDedicadas: 1,
+    prioridad: "baja",
+  ),
+  Activity(
+    tipo: "tarea",
+    nombre: "ejemplo de factura cfdi",
+    materia: "Habilidades directivas",
+    fechaLimite: DateTime.utc(2026, 4, 8),
+    horasDedicadas: 1,
+    prioridad: "media",
+  ),
+  Activity(
+    tipo: "proyecto",
+    nombre: "aplicacion de organizacion academica inteligente, proyecto final de la materia",
+    materia: "programacion movil",
+    fechaLimite: DateTime.utc(2026, 5, 7),
+    horasDedicadas: 5,
+    prioridad: "alta",
+  ),
+  Activity(
+    tipo: "tarea",
+    nombre: "practica de laboratorio 3",
+    materia: "redes de computadoras 2",
+    fechaLimite: DateTime.utc(2026, 4, 22),
+    horasDedicadas: 3,
+    prioridad: "baja",
+  ),
   Activity(
     nombre: "examen de bases de datos 2",
     materia: "bases de datos 2",
@@ -70,12 +165,19 @@ final List<Activity> activityList = [
     fechaLimite: DateTime.utc(2026, 4, 17),
   ),
   Activity(
+    tipo: "tarea",
+    nombre: "ejercicios de normalizacion",
+    materia: "bases de datos 2",
+    fechaLimite: DateTime.utc(2026, 5, 19),
+    horasDedicadas: 2,
+    prioridad: "media",
+  ),
+  Activity(
     tipo: "proyecto",
-    nombre:
-        "aplicacion de organizacion academica inteligente, proyecto final de la materia",
+    nombre: "prototipo de interfaz para proyecto de movil",
     materia: "programacion movil",
-    fechaLimite: DateTime.utc(2026, 5, 7),
-    horasDedicadas: 5,
+    fechaLimite: DateTime.utc(2026, 5, 3),
+    horasDedicadas: 6,
     prioridad: "alta",
   ),
   Activity(
@@ -88,26 +190,10 @@ final List<Activity> activityList = [
   ),
   Activity(
     tipo: "tarea",
-    nombre: "comentario de articulo 10",
-    materia: "redes de computadoras 2",
-    fechaLimite: DateTime.utc(2026, 5, 12),
-    horasDedicadas: 2,
-    prioridad: "media",
-  ),
-  Activity(
-    tipo: "tarea",
     nombre: "comentario de articulo 11",
     materia: "redes de computadoras 2",
     fechaLimite: DateTime.utc(2026, 5, 12),
     horasDedicadas: 2,
-    prioridad: "media",
-  ),
-  Activity(
-    tipo: "tarea",
-    nombre: "ejemplo de factura cfdi",
-    materia: "Habilidades directivas",
-    fechaLimite: DateTime.utc(2026, 4, 8),
-    horasDedicadas: 1,
     prioridad: "media",
   ),
 ];
