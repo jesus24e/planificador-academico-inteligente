@@ -3,7 +3,6 @@ import 'package:planificador_academico_inteligente/entities/activity.dart';
 final Map<DateTime, List<Activity>> mapDateActivity = {
   DateTime.utc(2026, 4, 17): [
     Activity(
-      id: null,
       nombre: "examen de bases de datos 2",
       materia: "bases de datos 2",
       tipo: "examen",
@@ -13,9 +12,9 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 5, 7): [
     Activity(
-      id: null,
       tipo: "proyecto",
-      nombre: "aplicacion de organizacion academica inteligente, proyecto final de la materia",
+      nombre:
+          "aplicacion de organizacion academica inteligente, proyecto final de la materia",
       materia: "programacion movil",
       fechaLimite: DateTime.utc(2026, 5, 7),
       horasDedicadas: 5,
@@ -24,7 +23,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 4, 14): [
     Activity(
-      id: null,
       tipo: "examen",
       nombre: "primer examen de bd2",
       materia: "bases de datos 2",
@@ -35,7 +33,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 5, 12): [
     Activity(
-      id: null,
       tipo: "tarea",
       nombre: "comentario de articulo 10",
       materia: "redes de computadoras 2",
@@ -44,7 +41,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
       prioridad: "media",
     ),
     Activity(
-      id: null,
       tipo: "tarea",
       nombre: "comentario de articulo 11",
       materia: "redes de computadoras 2",
@@ -55,7 +51,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 4, 8): [
     Activity(
-      id: null,
       tipo: "tarea",
       nombre: "ejemplo de factura cfdi",
       materia: "Habilidades directivas",
@@ -66,7 +61,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 4, 22): [
     Activity(
-      id: null,
       tipo: "tarea",
       nombre: "practica de laboratorio 3",
       materia: "redes de computadoras 2",
@@ -77,7 +71,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 4, 28): [
     Activity(
-      id: null,
       tipo: "examen",
       nombre: "examen parcial de redes",
       materia: "redes de computadoras 2",
@@ -86,7 +79,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
       prioridad: "alta",
     ),
     Activity(
-      id: null,
       tipo: "tarea",
       nombre: "resumen capitulo 5 de sistemas operativos",
       materia: "sistemas operativos",
@@ -97,7 +89,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 5, 3): [
     Activity(
-      id: null,
       tipo: "proyecto",
       nombre: "prototipo de interfaz para proyecto de movil",
       materia: "programacion movil",
@@ -108,7 +99,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
   ],
   DateTime.utc(2026, 5, 19): [
     Activity(
-      id: null,
       tipo: "tarea",
       nombre: "ejercicios de normalizacion",
       materia: "bases de datos 2",
@@ -121,7 +111,6 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
 
 final List<Activity> activityList = [
   Activity(
-    id: null,
     tipo: "tarea",
     nombre: "comentario de articulo 10",
     materia: "redes de computadoras 2",
@@ -130,7 +119,6 @@ final List<Activity> activityList = [
     prioridad: "media",
   ),
   Activity(
-    id: null,
     tipo: "examen",
     nombre: "examen parcial de redes",
     materia: "redes de computadoras 2",
@@ -139,7 +127,6 @@ final List<Activity> activityList = [
     prioridad: "alta",
   ),
   Activity(
-    id: null,
     tipo: "tarea",
     nombre: "resumen capitulo 5 de sistemas operativos",
     materia: "sistemas operativos",
@@ -148,7 +135,6 @@ final List<Activity> activityList = [
     prioridad: "baja",
   ),
   Activity(
-    id: null,
     tipo: "tarea",
     nombre: "ejemplo de factura cfdi",
     materia: "Habilidades directivas",
@@ -157,16 +143,15 @@ final List<Activity> activityList = [
     prioridad: "media",
   ),
   Activity(
-    id: null,
     tipo: "proyecto",
-    nombre: "aplicacion de organizacion academica inteligente, proyecto final de la materia",
+    nombre:
+        "aplicacion de organizacion academica inteligente, proyecto final de la materia",
     materia: "programacion movil",
     fechaLimite: DateTime.utc(2026, 5, 7),
     horasDedicadas: 5,
     prioridad: "alta",
   ),
   Activity(
-    id: null,
     tipo: "tarea",
     nombre: "practica de laboratorio 3",
     materia: "redes de computadoras 2",
@@ -175,7 +160,6 @@ final List<Activity> activityList = [
     prioridad: "baja",
   ),
   Activity(
-    id: null,
     nombre: "examen de bases de datos 2",
     materia: "bases de datos 2",
     tipo: "examen",
@@ -183,7 +167,6 @@ final List<Activity> activityList = [
     fechaLimite: DateTime.utc(2026, 4, 17),
   ),
   Activity(
-    id: null,
     tipo: "tarea",
     nombre: "ejercicios de normalizacion",
     materia: "bases de datos 2",
@@ -192,7 +175,6 @@ final List<Activity> activityList = [
     prioridad: "media",
   ),
   Activity(
-    id: null,
     tipo: "proyecto",
     nombre: "prototipo de interfaz para proyecto de movil",
     materia: "programacion movil",
@@ -201,7 +183,6 @@ final List<Activity> activityList = [
     prioridad: "alta",
   ),
   Activity(
-    id: null,
     tipo: "examen",
     nombre: "primer examen de bd2",
     materia: "bases de datos 2",
@@ -210,7 +191,6 @@ final List<Activity> activityList = [
     prioridad: "alta",
   ),
   Activity(
-    id: null,
     tipo: "tarea",
     nombre: "comentario de articulo 11",
     materia: "redes de computadoras 2",

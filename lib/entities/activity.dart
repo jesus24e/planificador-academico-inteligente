@@ -10,7 +10,7 @@ class Activity {
   
 
   Activity({
-    required this.id,
+    this.id,
     required this.nombre,
     required this.materia,
     required this.tipo,
