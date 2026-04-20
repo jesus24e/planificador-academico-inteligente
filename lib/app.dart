@@ -13,14 +13,5 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         home: const MainScaffold(),
       );
-    /*return MultiProvider(
-      providers: [],
-      child: MaterialApp(
-        title: "Planificador academico",
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: const MainScaffold(),
-      ),
-    );*/
   }
 }
