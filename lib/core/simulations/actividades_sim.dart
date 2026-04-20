@@ -1,3 +1,4 @@
+import 'package:planificador_academico_inteligente/data/repositories/activity_repository.dart';
 import 'package:planificador_academico_inteligente/entities/activity.dart';
 
 final Map<DateTime, List<Activity>> mapDateActivity = {
@@ -119,20 +120,20 @@ final List<Activity> activityList = [
     prioridad: "media",
   ),
   Activity(
-    tipo: "examen",
-    nombre: "examen parcial de redes",
-    materia: "redes de computadoras 2",
-    fechaLimite: DateTime.utc(2026, 4, 28),
-    horasDedicadas: 4,
-    prioridad: "alta",
-  ),
-  Activity(
     tipo: "tarea",
     nombre: "resumen capitulo 5 de sistemas operativos",
     materia: "sistemas operativos",
     fechaLimite: DateTime.utc(2026, 4, 28),
     horasDedicadas: 1,
     prioridad: "baja",
+  ),
+  Activity(
+    tipo: "examen",
+    nombre: "examen parcial de redes",
+    materia: "redes de computadoras 2",
+    fechaLimite: DateTime.utc(2026, 4, 28),
+    horasDedicadas: 4,
+    prioridad: "alta",
   ),
   Activity(
     tipo: "tarea",
@@ -199,3 +200,20 @@ final List<Activity> activityList = [
     prioridad: "media",
   ),
 ];
+
+final ActivityRepository _activityRepository = ActivityRepository();
+
+Future<void> insertActivities() async {
+  try {
+    for (var activity in activityList) {
+      await _activityRepository.insert(activity);
+    }
+  } catch (_) {}
+}
+Future<void> deleteAllActivities() async {
+  try {
+      await _activityRepository.deleteAll();
+  } catch (_) {}
+}
+
+
