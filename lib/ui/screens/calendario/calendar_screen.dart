@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:planificador_academico_inteligente/core/simulations/actividades_sim.dart';
+import 'package:planificador_academico_inteligente/core/utils/activity_utils.dart';
+import 'package:planificador_academico_inteligente/data/repositories/activity_repository.dart';
 import 'package:planificador_academico_inteligente/entities/activity.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/calendario/activityCard.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -14,13 +15,31 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, List<Activity>> eventosCalendario = {};
+  List<Activity> eventosCalendario = [];
+  final ActivityRepository _activityRepository = ActivityRepository();
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    eventosCalendario = mapDateActivity;
+    _loadActivities();
+  }
+
+  Future<void> _loadActivities() async {
+    try {
+      final actividades = await _activityRepository.getAll();
+
+      setState(() {
+        eventosCalendario = sortByPriority(actividades);
+        _isLoading = false;
+      });
+    } catch (_) {
+      setState(() {
+        eventosCalendario = [];
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -106,12 +125,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   List<Activity> _getEventosDelDia(DateTime day) {
-    final key = DateTime.utc(day.year, day.month, day.day);
-    return eventosCalendario[key] ?? [];
+    final listaEventos = eventosCalendario
+        .where(
+          (a) =>
+              a.fechaLimite.year == day.year &&
+              a.fechaLimite.month == day.month &&
+              a.fechaLimite.day == day.day,
+        )
+        .toList();
+    return listaEventos;
   }
 
   Widget _buildEventList() {
     final eventos = _getEventosDelDia(_selectedDay ?? _focusedDay);
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (eventos.isNotEmpty) {
       return ListView.builder(
