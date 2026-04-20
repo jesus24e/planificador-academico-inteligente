@@ -9,7 +9,6 @@ class ActivityRepository {
   Future<List<Activity>> getBySubject(String subject) => _dao.getBySubject(subject);
   Future<int> insert(Activity activity) => _dao.insert(activity);
   Future<int> update(Activity activity) => _dao.update(activity);
-  Future<int> delete(int id) => _dao.delete(id);
-  
-
+  Future<int> delete(int id) => _dao.deleteById(id);
+  Future<int> deleteAll() => _dao.deleteAll(); 
 }

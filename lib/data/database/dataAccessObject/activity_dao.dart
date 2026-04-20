@@ -33,7 +33,7 @@ class ActivityDao {
   Future<int> insert(Activity activity) async {
     final db = await _db.database;
     return await db.database.insert(
-      "activity",
+      "actividades",
       _toMap(activity),
     ); //retorna el id del registro insertado
   }
@@ -48,9 +48,14 @@ class ActivityDao {
     ); //retorna el id del registro actualizado
   }
 
-  Future<int> delete(int id) async {
+  Future<int> deleteById(int id) async {
     final db = await _db.database;
     return await db.delete("actividades", where: "id = ?", whereArgs: [id]);
+  } //retorna el id del registro eliminado
+
+  Future<int> deleteAll() async {
+    final db = await _db.database;
+    return await db.delete("actividades");
   } //retorna el id del registro eliminado
 
   Map<String, dynamic> _toMap(Activity activity) {
