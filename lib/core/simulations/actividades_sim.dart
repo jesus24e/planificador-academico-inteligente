@@ -54,7 +54,7 @@ final Map<DateTime, List<Activity>> mapDateActivity = {
     Activity(
       tipo: "tarea",
       nombre: "ejemplo de factura cfdi",
-      materia: "Habilidades directivas",
+      materia: "habilidades directivas",
       fechaLimite: DateTime.utc(2026, 4, 8),
       horasDedicadas: 1,
       prioridad: "media",
@@ -138,7 +138,7 @@ final List<Activity> activityList = [
   Activity(
     tipo: "tarea",
     nombre: "ejemplo de factura cfdi",
-    materia: "Habilidades directivas",
+    materia: "habilidades directivas",
     fechaLimite: DateTime.utc(2026, 4, 8),
     horasDedicadas: 1,
     prioridad: "media",
@@ -205,8 +205,15 @@ final ActivityRepository _activityRepository = ActivityRepository();
 
 Future<void> insertActivities() async {
   try {
-    for (var activity in activityList) {
-      await _activityRepository.insert(activity);
+    await _activityRepository.insertMany(activityList);
+  } catch (_) {}
+}
+
+Future<void> seedIfEmpty() async {
+  try {
+    final existing = await _activityRepository.count();
+    if (existing == 0) {
+      await _activityRepository.insertMany(activityList);
     }
   } catch (_) {}
 }

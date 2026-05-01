@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:planificador_academico_inteligente/core/simulations/actividades_sim.dart';
 import 'package:planificador_academico_inteligente/core/utils/activity_utils.dart';
+import 'package:planificador_academico_inteligente/data/repositories/activity_repository.dart';
+import 'package:planificador_academico_inteligente/data/repositories/subject_repository.dart';
+import 'package:planificador_academico_inteligente/entities/activity.dart';
 import 'tarea_item.dart';
+import 'tarea_detail_dialog.dart';
+// import 'nueva_tarea_dialog.dart'; // TODO: descomentar cuando se integre el nuevo botón "+ Nueva tarea"
 
 class TareasTab extends StatefulWidget {
   const TareasTab({super.key});
@@ -11,9 +15,116 @@ class TareasTab extends StatefulWidget {
 }
 
 class _TareasTabState extends State<TareasTab> {
-  String _filtroTipo = 'Tipo';
-  String _filtroMateria = 'Materia';
-  final sortedList = sortByPriority(activityList);
+  static const String _todosTipos = 'Tipo';
+  static const String _todasMaterias = 'Materia';
+
+  static const List<String> _tiposFijos = [
+    _todosTipos,
+    'Tarea',
+    'Actividad',
+    'Examen',
+    'Proyecto',
+  ];
+
+  final ActivityRepository _activityRepo = ActivityRepository();
+  final SubjectRepository _subjectRepo = SubjectRepository();
+
+  String _filtroTipo = _todosTipos;
+  String _filtroMateria = _todasMaterias;
+  String _busqueda = '';
+
+  List<Activity> _actividades = [];
+  List<String> _tipos = _tiposFijos;
+  List<String> _materias = [_todasMaterias];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    setState(() => _loading = true);
+    try {
+      final actividades = await _activityRepo.getAll();
+      final subjects = await _subjectRepo.getAll();
+
+      final materiasSet = <String>{};
+      for (final a in actividades) {
+        materiasSet.add(a.materia);
+      }
+      for (final s in subjects) {
+        materiasSet.add(s.nombre);
+      }
+
+      final materiasOrdenadas = materiasSet.toList()..sort();
+
+      if (!mounted) return;
+      setState(() {
+        _actividades = sortByPriority(actividades);
+        _materias = [_todasMaterias, ...materiasOrdenadas];
+        if (!_materias.contains(_filtroMateria)) _filtroMateria = _todasMaterias;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _actividades = [];
+        _materias = [_todasMaterias];
+        _loading = false;
+      });
+    }
+  }
+
+  List<Activity> get _actividadesFiltradas {
+    return _actividades.where((a) {
+      final pasaTipo = _filtroTipo == _todosTipos ||
+          a.tipo.toLowerCase() == _filtroTipo.toLowerCase();
+      final pasaMateria = _filtroMateria == _todasMaterias ||
+          a.materia.toLowerCase() == _filtroMateria.toLowerCase();
+      final pasaBusqueda = _busqueda.isEmpty ||
+          a.nombre.toLowerCase().contains(_busqueda.toLowerCase());
+      return pasaTipo && pasaMateria && pasaBusqueda;
+    }).toList();
+  }
+
+  void _abrirDetalle(Activity activity) {
+    showDialog(
+      context: context,
+      builder: (_) => TareaDetailDialog(
+        activity: activity,
+        onChanged: _cargar,
+      ),
+    );
+  }
+
+  // TODO: descomentar cuando se integre el nuevo botón "+ Nueva tarea"
+  // void _abrirNuevaTarea() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) => NuevaTareaDialog(onCreated: _cargar),
+  //   );
+  // }
+
+  Future<void> _eliminar(Activity activity) async {
+    if (activity.id == null) return;
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar tarea'),
+        content: Text('¿Eliminar "${activity.nombre}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmar == true) {
+      await _activityRepo.delete(activity.id!);
+      _cargar();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +133,6 @@ class _TareasTabState extends State<TareasTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // *Subtítulo + botón
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -31,36 +141,50 @@ class _TareasTabState extends State<TareasTab> {
                 style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
               ElevatedButton.icon(
-                onPressed: () {
-                  // todo: Navigator.push → nueva tarea
-                },
+                onPressed: null, // TODO: reconectar a _abrirNuevaTarea cuando se integre el nuevo botón
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('Nueva tarea'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E3A5F),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   textStyle: const TextStyle(fontSize: 13),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-
-          // *Filtros + buscador
           _buildFiltros(),
           const SizedBox(height: 16),
-
-          // *Lista de tareas
-          Expanded(
-            child: ListView(
-              children: [...sortedList.map((e) => TareaItem(activity: e))],
-            ),
-          ),
+          Expanded(child: _buildLista()),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLista() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final filtradas = _actividadesFiltradas;
+    if (filtradas.isEmpty) {
+      return const Center(
+        child: Text('No hay tareas que coincidan',
+            style: TextStyle(color: Color(0xFF6B7280))),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _cargar,
+      child: ListView.builder(
+        itemCount: filtradas.length,
+        itemBuilder: (_, i) {
+          final a = filtradas[i];
+          return TareaItem(
+            activity: a,
+            onTap: () => _abrirDetalle(a),
+            onDelete: () => _eliminar(a),
+          );
+        },
       ),
     );
   }
@@ -68,38 +192,30 @@ class _TareasTabState extends State<TareasTab> {
   Widget _buildFiltros() {
     return Column(
       children: [
-        // *Fila 1: Buscador
         TextField(
           decoration: InputDecoration(
             hintText: 'Buscar tarea...',
             prefixIcon: const Icon(Icons.search, size: 18),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
+          onChanged: (v) => setState(() => _busqueda = v),
         ),
         const SizedBox(height: 8),
-
-        // *Fila 2: Dropdowns
         Row(
           children: [
             Expanded(
               child: _buildDropdown(
                 valor: _filtroTipo,
-                onChanged: (val) => setState(() => _filtroTipo = val!),
-                items: ['Tipo', 'Examen', 'Tarea', 'Proyecto'],
+                onChanged: (val) => setState(() => _filtroTipo = val ?? _todosTipos),
+                items: _tipos,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _buildDropdown(
                 valor: _filtroMateria,
-                onChanged: (val) => setState(() => _filtroMateria = val!),
-                items: [
-                  'Materia',
-                  'Bases de datos 2',
-                  'Programación móvil',
-                  'Redes de computadoras',
-                  'Habilidades directivas',
-                ],
+                onChanged: (val) => setState(() => _filtroMateria = val ?? _todasMaterias),
+                items: _materias,
               ),
             ),
           ],
@@ -114,7 +230,7 @@ class _TareasTabState extends State<TareasTab> {
     required List<String> items,
   }) {
     return DropdownButtonFormField<String>(
-      initialValue: valor,
+      initialValue: items.contains(valor) ? valor : items.first,
       onChanged: onChanged,
       isExpanded: true,
       decoration: InputDecoration(
@@ -122,7 +238,7 @@ class _TareasTabState extends State<TareasTab> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 10),
       ),
       items: items
-          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .map((item) => DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis)))
           .toList(),
     );
   }

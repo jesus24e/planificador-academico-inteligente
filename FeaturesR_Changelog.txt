@@ -1,0 +1,338 @@
+---------------------------------------------------------------------------
+Cambios en la BD
+---------------------------------------------------------------------------
+
+[1] Archivo: database_helper.dart
+    Ubicacion: lib/data/database/database_helper.dart
+    Proposito:
+      - Se anadio "await" a las sentencias execute de creacion de tablas
+        (antes el "execute" se disparaba sin esperar, lo que podia provocar
+        condiciones de carrera al inicializar la BD).
+      - Se centralizaron constantes "dbName", "dbVersion" y "tableActividades"
+        para evitar strings magicos repartidos en el codigo.
+      - Se agrego "onConfigure" con "PRAGMA foreign_keys = ON" para dejar
+        habilitadas las llaves foraneas.
+      - Se agrego "onUpgrade" como gancho de migracion para evitar tener que
+        desinstalar la app cuando se cambie el esquema en el futuro.
+      - Se reforzo el esquema de la tabla "actividades":
+          * "descripcion" pasa de "TEXT DEFAULT ''" a "TEXT NOT NULL DEFAULT ''".
+          * "horas_dedicadas" pasa de "INTEGER DEFAULT 0" a
+            "INTEGER NOT NULL DEFAULT 0 CHECK (horas_dedicadas >= 0)".
+          * "tipo" recibe CHECK en ('tarea','examen','proyecto').
+          * "prioridad" recibe CHECK en ('alta','media','baja').
+      - Se crearon tres indices para acelerar consultas frecuentes:
+          * idx_actividades_materia
+          * idx_actividades_fecha_limite
+          * idx_actividades_prioridad
+      - Se agrego un metodo "close()" para poder cerrar la conexion de forma
+        controlada cuando la app lo requiera.
+
+
+[2] Archivo: activity_dao.dart
+    Ubicacion: lib/data/database/dataAccessObject/activity_dao.dart
+    Proposito:
+      - Se corrigio un bug critico en "insert": antes se invocaba
+        "db.database.insert(...)" (Database no expone ".database"); ahora se
+        invoca correctamente "db.insert(...)". Esta era la causa por la que
+        las inserciones individuales fallaban en runtime.
+      - "getById" ahora retorna "Activity?" (nullable). Antes hacia
+        "response.first" sin verificar y crasheaba si el id no existia.
+      - "getAll" y "getBySubject" ahora ordenan por "fecha_limite ASC" para
+        un orden estable y predecible en la UI.
+      - Se agrego "getByDateRange" para consultar actividades por rango de
+        fechas, util para el calendario y futuras vistas semanales/diarias.
+      - Se agrego "insertMany" que inserta todo dentro de una transaccion
+        usando "batch", lo cual es mucho mas rapido que N inserts sueltos.
+      - Se agrego "count" para saber cuantos registros hay sin traerlos todos
+        a memoria.
+      - "deleteAll" ahora borra dentro de una transaccion y resetea el
+        contador de AUTOINCREMENT de "sqlite_sequence", asi los ids vuelven
+        a empezar desde 1.
+      - "_toMap" ahora incluye el id solo si no es null.
+      - "_fromMap" usa casts explicitos para mejor seguridad de tipos.
+      - Se centralizo el nombre de la tabla en una constante "_table".
+
+
+[3] Archivo: activity_repository.dart
+    Ubicacion: lib/data/repositories/activity_repository.dart
+    Proposito:
+      - Se actualizo la firma de "getById" a "Future<Activity?>".
+      - Se expusieron los nuevos metodos del DAO: getByDateRange,
+        insertMany, count.
+
+
+[4] Archivo: activity.dart
+    Ubicacion: lib/entities/activity.dart
+    Proposito:
+      - Se agrego el metodo "copyWith" a la entidad. Es indispensable para
+        actualizar instancias inmutables despues de un insert (por ejemplo,
+        para asignar el id que devuelve la BD) o al editar campos sueltos
+        sin tener que reconstruir manualmente el resto.
+
+
+[5] Archivo: actividades_sim.dart
+    Ubicacion: lib/core/simulations/actividades_sim.dart
+    Proposito:
+      - "insertActivities" ahora usa "insertMany" (transaccion + batch) en
+        lugar de un for con N inserts secuenciales.
+      - Se anadio "seedIfEmpty", que solo siembra los datos de simulacion
+        cuando la tabla esta vacia. Asi se preservan los registros que el
+        usuario haya creado o modificado entre arranques de la app.
+
+
+[6] Archivo: main.dart
+    Ubicacion: lib/main.dart
+    Proposito:
+      - Se reemplazo la siembra destructiva (deleteAllActivities seguida
+        de insertActivities, ejecutada en cada arranque) por una unica
+        llamada a "seedIfEmpty". Antes la BD se borraba completa cada vez
+        que se abria la app, lo que destruia cualquier dato real del
+        usuario.
+
+
+---------------------------------------------------------------------------
+Creación de tabla "Materias" y uso en la aplicación
+---------------------------------------------------------------------------
+
+Se modelo la entidad faltante "Materia" (Subject), que la UI ya consumia
+de forma hardcoded (MateriaCard con nombre/profesor/horario) pero que no
+tenia respaldo en la base de datos. Las actividades quedan vinculadas a
+las materias mediante una llave foranea, garantizando que no puedan
+existir actividades referenciando una materia inexistente.
+
+
+[7] Archivo: subject.dart  (NUEVO)
+    Ubicacion: lib/entities/subject.dart
+    Proposito:
+      - Define la entidad "Subject" con los campos id, nombre, profesor,
+        horario y color. Incluye "copyWith" siguiendo el mismo patron que
+        Activity.
+
+
+[8] Archivo: subject_dao.dart  (NUEVO)
+    Ubicacion: lib/data/database/dataAccessObject/subject_dao.dart
+    Proposito:
+      - DAO completo para "materias": getAll, getById, getByName, insert,
+        insertMany (con ConflictAlgorithm.ignore para no fallar ante
+        duplicados), update, deleteById, deleteAll (con reset de
+        AUTOINCREMENT) y count. Sigue el mismo patron que ActivityDao.
+
+
+[9] Archivo: subject_repository.dart  (NUEVO)
+    Ubicacion: lib/data/repositories/subject_repository.dart
+    Proposito:
+      - Capa repositorio para Subject, expone la API del DAO al resto de
+        la aplicacion.
+
+
+[10] Archivo: materias_sim.dart  (NUEVO)
+     Ubicacion: lib/core/simulations/materias_sim.dart
+     Proposito:
+      - Catalogo de materias simuladas alineado uno a uno con las
+        materias referenciadas por las actividades sembradas
+        (bases de datos 2, programacion movil, redes de computadoras 2,
+        sistemas operativos, habilidades directivas).
+      - Funciones "insertSubjects", "seedSubjectsIfEmpty" y
+        "deleteAllSubjects" siguiendo el mismo patron que actividades_sim.
+
+
+[11] Archivo: database_helper.dart  (MODIFICADO)
+     Ubicacion: lib/data/database/database_helper.dart
+     Proposito:
+      - Se incremento "dbVersion" de 1 a 2.
+      - Se anadio constante "tableMaterias".
+      - "_createTables" ahora crea PRIMERO la tabla "materias" y DESPUES
+        la tabla "actividades" (orden requerido por la FK):
+          * materias.nombre es UNIQUE COLLATE NOCASE.
+          * actividades.materia es FOREIGN KEY a materias(nombre) con
+            ON UPDATE CASCADE (renombrar una materia se propaga a sus
+            actividades) y ON DELETE RESTRICT (no se puede borrar una
+            materia que tenga actividades, evita huerfanos).
+      - Se implemento "_migrateToV2" para usuarios que ya tenian la BD
+        en version 1: crea la tabla materias, la puebla con las materias
+        DISTINCT que existian en actividades, recrea actividades con la
+        FK siguiendo el patron estandar de SQLite (crear nueva, copiar,
+        drop, rename) y reconstruye los indices. Todo dentro de una
+        transaccion para garantizar atomicidad.
+      - "actividades.materia" usa COLLATE NOCASE para que las
+        comparaciones sean insensibles a mayusculas/minusculas.
+
+
+[12] Archivo: actividades_sim.dart  (MODIFICADO)
+     Ubicacion: lib/core/simulations/actividades_sim.dart
+     Proposito:
+      - Se normalizo la unica materia que estaba en mayusculas
+        ("Habilidades directivas" → "habilidades directivas") para que
+        todos los registros sembrados sean coherentes con el catalogo de
+        materias. Sin esta normalizacion, aunque la FK funcionaria por
+        COLLATE NOCASE, los strings que llegan a la UI quedarian
+        inconsistentes entre actividades.
+
+
+[13] Archivo: main.dart  (MODIFICADO)
+     Ubicacion: lib/main.dart
+     Proposito:
+      - Se anadio el import de materias_sim.dart.
+      - Se llama "seedSubjectsIfEmpty()" ANTES de "seedIfEmpty()", porque
+        las actividades referencian materias por FK y la tabla padre
+        debe estar poblada primero.
+
+
+Notas adicionales
+-----------------
+- La UI de la pestaña "Mis materias" (materias_tab.dart) sigue mostrando
+  datos hardcoded como antes. La capa de datos para materias quedo lista
+  para ser conectada cuando se decida tocar la UI; esta iteracion no
+  modifico ningun archivo de UI.
+- La migracion a v2 es no destructiva: usuarios con la app instalada
+  conservan sus actividades y obtienen automaticamente una tabla materias
+  con sus materias existentes.
+- La FK con ON UPDATE CASCADE permite que en el futuro, si la UI deja
+  renombrar una materia, todas las actividades asociadas se actualicen
+  automaticamente sin codigo adicional.
+
+
+---------------------------------------------------------------------------
+Uso de filtros dinámicos.
+---------------------------------------------------------------------------
+
+Se rehizo la pestana "Mis tareas" para que lea de la base de datos en
+lugar de la lista hardcoded, los filtros se calculen dinamicamente a
+partir de los datos reales, las tareas se puedan abrir para ver detalle
+y editar (incluyendo marcarlas como completadas/pendientes) y se valide
+que las nuevas tareas referencien una materia existente.
+
+
+[14] Archivo: database_helper.dart  (MODIFICADO)
+     Ubicacion: lib/data/database/database_helper.dart
+     Proposito:
+      - Se incremento "dbVersion" de 2 a 3.
+      - Se agrego la columna "completada INTEGER NOT NULL DEFAULT 0
+        CHECK (completada IN (0,1))" a la tabla actividades. Representa
+        un booleano (0 = pendiente, 1 = completada).
+      - Se elimino el CHECK fijo de "tipo" ('tarea','examen','proyecto')
+        para permitir tipos arbitrarios definidos por el usuario, segun
+        el requisito de filtros dinamicos. Sin este cambio, agregar un
+        tipo nuevo como "Actividad" haria fallar el insert por
+        constraint violation. La validacion de tipos puede vivir en la
+        UI si se requiere.
+      - Se anadio "_migrateToV3" que ejecuta un ALTER TABLE para agregar
+        la columna "completada" en BDs existentes (migracion no
+        destructiva).
+      - El "_migrateToV2" tambien se actualizo para que la tabla
+        recreada NO incluya el CHECK de tipo, manteniendo coherencia
+        entre la migracion y _createTables.
+
+
+[15] Archivo: activity.dart  (MODIFICADO)
+     Ubicacion: lib/entities/activity.dart
+     Proposito:
+      - Se agrego el campo "bool completada" con default false.
+      - "copyWith" se extendio para incluirlo.
+
+
+[16] Archivo: activity_dao.dart  (MODIFICADO)
+     Ubicacion: lib/data/database/dataAccessObject/activity_dao.dart
+     Proposito:
+      - "_toMap" y "_fromMap" ahora persisten/leen "completada" como
+        INTEGER (0/1), traduciendolo a/desde bool en Dart.
+      - Se agrego "getDistinctTipos()" que devuelve los tipos unicos
+        registrados (alimenta el dropdown de filtro de tipo).
+      - Se agrego "getDistinctMaterias()" que devuelve las materias
+        unicas presentes en actividades.
+      - Se agrego "setCompletada(id, completada)" como atajo para
+        marcar/desmarcar una tarea sin tener que reescribir todo el
+        registro.
+
+
+[17] Archivo: activity_repository.dart  (MODIFICADO)
+     Ubicacion: lib/data/repositories/activity_repository.dart
+     Proposito:
+      - Se expusieron los nuevos metodos: getDistinctTipos,
+        getDistinctMaterias, setCompletada.
+
+
+[18] Archivo: tarea_detail_dialog.dart  (NUEVO)
+     Ubicacion: lib/ui/widgets/actividades/tarea_detail_dialog.dart
+     Proposito:
+      - Modal que se abre al tocar una tarea. Muestra la informacion
+        completa (nombre, materia, tipo, descripcion) y permite editar:
+          * Prioridad (alta/media/baja) via ChoiceChip.
+          * Horas estimadas (botones +/-).
+          * Fecha de entrega (showDatePicker).
+          * Estado completada/pendiente (Switch).
+        Al guardar persiste con activityRepository.update y notifica al
+        padre para refrescar la lista.
+
+
+[19] Archivo: nueva_tarea_dialog.dart  (NUEVO)
+     Ubicacion: lib/ui/widgets/actividades/nueva_tarea_dialog.dart
+     Proposito:
+      - Modal de creacion de tarea con un dropdown de materias que se
+        pobla desde subjectRepository.getAll. Esto garantiza que solo
+        se puedan elegir materias existentes.
+      - Si no hay materias registradas, muestra un mensaje dirigiendo
+        al usuario a "Mis materias" y deshabilita el boton crear.
+      - Antes de insertar valida via subjectRepository.getByName que la
+        materia exista; si no, muestra un AlertDialog explicando que
+        debe registrarla primero (requisito de homologacion solicitado).
+
+
+[20] Archivo: tareas_tab.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/actividades/tareas_tab.dart
+     Proposito:
+      - Se reemplazo la lectura de "activityList" (lista hardcoded en
+        memoria) por carga desde activityRepository.getAll. Es la
+        primera vez que esta pantalla refleja datos reales de la BD.
+      - Los dropdowns de tipo y materia ahora se construyen
+        dinamicamente:
+          * Tipo: opcion "Tipo" (todos) + tipos DISTINCT detectados en
+            las actividades. Al agregar una tarea con un tipo nuevo, el
+            filtro lo refleja automaticamente.
+          * Materia: opcion "Materia" (todos) + union de las materias
+            registradas en la tabla materias y las materias presentes en
+            actividades. Asi, si por algun motivo (datos legados, datos
+            insertados directo en BD) hay una materia en una actividad
+            que no existe en la tabla materias, el usuario igual puede
+            filtrarla y verla.
+      - Se agrego buscador funcional por nombre de tarea (antes era un
+        TextField puramente decorativo).
+      - Cada TareaItem recibe ahora un onTap que abre TareaDetailDialog
+        y un onDelete con confirmacion.
+      - El boton "Nueva tarea" abre NuevaTareaDialog (antes solo tenia
+        un TODO sin implementar).
+      - Se agrego RefreshIndicator y un placeholder cuando la lista
+        filtrada queda vacia.
+
+
+[21] Archivo: tarea_item.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/actividades/tarea_item.dart
+     Proposito:
+      - Se envolvio en un InkWell para soportar el tap (callback
+        opcional onTap).
+      - "onDelete" tambien se hizo callback opcional, asi el padre
+        controla el comportamiento (en tareas_tab pide confirmacion).
+      - Si la tarea esta completada se muestra:
+          * Fondo gris suave en lugar de blanco.
+          * Etiqueta "completada" verde.
+          * Texto del nombre tachado (lineThrough) y en gris.
+        Esto da feedback visual inmediato del estado.
+      - Las llamadas existentes que pasaban solo "activity:" siguen
+        funcionando porque ambos callbacks son nullable.
+
+
+Notas adicionales
+-----------------
+- Se omitio el parametro "locale" en showDatePicker porque MaterialApp
+  no tiene flutter_localizations configurado; pasarle un locale sin esos
+  delegates tiraria una excepcion en runtime. El picker funciona en
+  ingles. Si se quiere localizar, basta agregar flutter_localizations al
+  pubspec y los delegates al MaterialApp en una iteracion futura.
+- No se modificaron home_screen, calendar_screen, priorityList ni
+  activityCard. Estos siguen comportandose como antes; los nuevos
+  campos de la entidad Activity son retro-compatibles porque
+  "completada" tiene default false.
+- "activityList" y "mapDateActivity" siguen existiendo en
+  actividades_sim.dart porque otras pantallas (priorityList,
+  calendar_screen) las consumen aun. Refactorizar esas pantallas no
+  formaba parte de esta solicitud.
