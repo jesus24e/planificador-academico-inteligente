@@ -4,6 +4,7 @@ import 'package:planificador_academico_inteligente/entities/activity.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/home/cardsRow.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/home/header.dart';
 import 'package:planificador_academico_inteligente/ui/widgets/home/priorityList.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/home/aniadirTarea.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     eventosCalendario = mapDateActivity;
   }
+  
 
   Widget build(BuildContext context) {
     return SafeArea(
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
             buildPrioritiesList(),
             const SizedBox(height: 15),
             buildAddTaskBtn(),
+            
           ],
         ),
       ),
@@ -88,19 +91,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildAddTaskBtn() {
-    return Container(
-      alignment: Alignment.centerRight,
-      child: FilledButton(
-        onPressed: () =>
-            Null, //TODO:hacer que la funcion agregue una tarea a la lista y despues setstate para actualizar
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.green,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.circular(10),
-          ),
-        ),
-        child: Text("Añadir tarea"),
+  return Container(
+    alignment: Alignment.centerRight,
+    child: FilledButton(
+      onPressed: () => showDialog(
+        context: context,
+        builder: (context) => const AniadirTareaDialog(),
       ),
-    );
-  }
+      style: FilledButton.styleFrom(
+        backgroundColor: Colors.green,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.circular(10),
+        ),
+      ),
+      child: const Text("Añadir tarea"),
+    ),
+  );
+}
 }
