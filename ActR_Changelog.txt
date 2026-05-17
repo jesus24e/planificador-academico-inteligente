@@ -1,0 +1,184 @@
+ActR_Changelog
+==============
+
+Rama: integracion del boton "Nueva tarea" tras el merge del equipo.
+Objetivo de esta entrega: diagnosticar y corregir por que el boton
+"Nueva tarea" / "Anadir tarea" no funcionaba.
+
+
+===========================================================================
+DIAGNOSTICO - Que estaba fallando
+===========================================================================
+
+[CAUSA PRINCIPAL]
+El boton "Anadir tarea" de la pantalla de Inicio SI abria el dialogo,
+pero el boton "Guardar" dentro del dialogo no hacia nada.
+En lib/ui/widgets/home/aniadirTarea.dart el onPressed del boton Guardar
+tenia el cuerpo vacio:
+
+    onPressed: () {
+      //  guardar datos
+    },
+
+Es decir, el companero construyo toda la interfaz del formulario pero
+dejo pendiente la logica de guardado. Al pulsar "Guardar" no se insertaba
+nada en la base de datos y el dialogo ni siquiera se cerraba.
+
+[PROBLEMAS SECUNDARIOS DETECTADOS]
+1. El dialogo usaba un TextField libre para "materia". Como existe una
+   llave foranea actividades.materia -> materias.nombre, guardar una
+   materia inexistente habria provocado un error de constraint.
+2. El dropdown de "tipo" solo tenia 3 opciones (tarea, examen, proyecto);
+   faltaba "actividad", definida como una de las 4 opciones oficiales.
+3. Quedaron DOS dialogos para la misma funcion: aniadirTarea.dart (del
+   companero, conectado pero incompleto) y nueva_tarea_dialog.dart (de
+   una iteracion previa, completo pero ya sin uso tras el merge).
+4. El boton "Nueva tarea" de la pestana "Mis tareas" seguia deshabilitado
+   (onPressed: null) desde una iteracion anterior.
+5. Warning menor: faltaba la anotacion @override sobre el metodo build
+   en home_screen.dart.
+
+
+===========================================================================
+CAMBIOS REALIZADOS
+===========================================================================
+
+[1] Archivo: aniadirTarea.dart  (MODIFICADO)
+    Ubicacion: lib/ui/widgets/home/aniadirTarea.dart
+    Proposito:
+      - Se implemento la logica de guardado que faltaba (el onPressed
+        vacio). Ahora el boton "Guardar" inserta la tarea en la base de
+        datos usando ActivityRepository.insert.
+      - Se mantuvo intacta la interfaz creada por el companero (estructura
+        AlertDialog, campos y estilos).
+      - Se mantiene el campo de texto libre para "materia", pero antes de
+        guardar se valida con SubjectRepository.getByName que la materia
+        exista en "Mis materias". Si no existe, se muestra un AlertDialog
+        explicando que debe registrarla primero (mantiene la informacion
+        homologada y respeta la llave foranea).
+      - Se agrego la opcion "Actividad" al dropdown de tipo, que antes
+        faltaba (ahora: Tarea, Actividad, Examen, Proyecto).
+      - Se agrego un callback opcional "onCreated" para que la pantalla
+        que abre el dialogo pueda refrescarse despues de guardar.
+      - Se agrego validacion de campos (nombre y materia obligatorios,
+        horas no negativas) con mensajes via SnackBar.
+      - Se agrego un indicador de carga mientras se guarda y se
+        deshabilitan los botones para evitar doble insercion.
+      - Se cambio "value:" por "initialValue:" en los
+        DropdownButtonFormField (el parametro value esta deprecado en
+        ese widget en versiones recientes de Flutter).
+
+
+[2] Archivo: home_screen.dart  (MODIFICADO)
+    Ubicacion: lib/ui/screens/home/home_screen.dart
+    Proposito:
+      - Se anadio la anotacion @override que faltaba sobre el metodo
+        build.
+      - El boton "Anadir tarea" ahora pasa un callback "onCreated" al
+        dialogo que muestra una confirmacion (SnackBar "Tarea guardada").
+      - Nota: home_screen sigue mostrando la lista de prioridades desde
+        mapDateActivity (datos en memoria), por lo que la tarea recien
+        creada se guarda en la base de datos pero no aparece de
+        inmediato en esta pantalla. Conectar el Inicio a la base de
+        datos no formaba parte de esta solicitud.
+
+
+[3] Archivo: tareas_tab.dart  (MODIFICADO)
+    Ubicacion: lib/ui/widgets/actividades/tareas_tab.dart
+    Proposito:
+      - Se reactivo el boton "Nueva tarea" de la pestana "Mis tareas",
+        que estaba deshabilitado (onPressed: null).
+      - El boton ahora abre AniadirTareaDialog (el dialogo oficial ya
+        corregido) y le pasa onCreated: _cargar, de modo que la lista
+        de tareas se refresca automaticamente al guardar.
+      - Se reemplazo el import comentado de nueva_tarea_dialog.dart por
+        el import de aniadirTarea.dart.
+      - Se descomento y reconecto el metodo _abrirNuevaTarea.
+
+
+[4] Archivo: nueva_tarea_dialog.dart  (MARCADO COMO NO USADO)
+    Ubicacion: lib/ui/widgets/actividades/nueva_tarea_dialog.dart
+    Proposito:
+      - Tras el merge, este dialogo quedo huerfano (ningun archivo lo
+        importaba). La implementacion oficial es ahora AniadirTareaDialog.
+      - Se comento todo el contenido del archivo y se agrego una nota de
+        cabecera explicando que esta deprecado y por que. No se elimino
+        para conservarlo como referencia historica.
+
+
+===========================================================================
+RESULTADO
+===========================================================================
+
+- El boton "Anadir tarea" (Inicio) ahora guarda correctamente la tarea
+  en la base de datos.
+- El boton "Nueva tarea" (pestana Mis tareas) quedo reactivado y abre el
+  mismo dialogo; al guardar, la lista de tareas se refresca sola.
+- Ambos botones validan que la materia exista antes de guardar, evitando
+  errores de integridad con la base de datos.
+- Ya no hay codigo duplicado activo: existe un unico dialogo oficial.
+
+
+Notas adicionales
+-----------------
+- No se modifico la base de datos ni las entidades en esta entrega; el
+  problema era puramente de logica de UI y de cableado tras el merge.
+- Para que las tareas creadas desde Inicio aparezcan en esa misma
+  pantalla sin reiniciar la app, en una iteracion futura habria que
+  conectar home_screen (y priorityList) a la base de datos en lugar de
+  mapDateActivity.
+
+
+===========================================================================
+Iteracion 2 - Selector de materia en el dialogo de nueva tarea
+===========================================================================
+
+Se cambio la forma de asignar la materia en el dialogo AniadirTareaDialog
+(el que abren tanto el boton "Anadir tarea" de Inicio como el boton
+"Nueva tarea" de la pestana Mis tareas).
+
+
+[5] Archivo: aniadirTarea.dart  (MODIFICADO)
+    Ubicacion: lib/ui/widgets/home/aniadirTarea.dart
+    Proposito:
+      - Se reemplazo el TextField libre de "materia" por un selector
+        desplegable (DropdownButtonFormField) que se llena con las
+        materias registradas en la base de datos via
+        SubjectRepository.getAll. Ahora el usuario solo puede elegir
+        materias que existen, no escribirlas a mano.
+      - Al final del selector se agrego la opcion fija "Agregar nueva
+        materia" (con icono +).
+      - Al elegir "Agregar nueva materia" se abre un dialogo placeholder
+        con el texto "En desarrollo" y un boton "Aceptar" que solo lo
+        cierra. Esto es temporal: la seccion real de "Nueva materia"
+        aun no esta desarrollada.
+      - Tras cerrar ese placeholder, el selector recarga las materias
+        desde la base de datos (_cargarMaterias). Hoy la lista vuelve
+        igual porque el placeholder no inserta nada, pero cuando se
+        implemente la seccion real de "Nueva materia", la materia recien
+        creada aparecera automaticamente en el selector sin necesidad
+        de modificar este archivo.
+      - Se elimino la validacion "_mostrarMateriaInexistente" y la
+        llamada a SubjectRepository.getByName: ya no son necesarias,
+        porque al elegir de un selector es imposible seleccionar una
+        materia que no exista. Esto evita codigo muerto.
+      - Se elimino el controlador de texto "_materiaCtrl" que ya no se
+        usa; en su lugar se guarda la seleccion en la variable de estado
+        "_materiaSeleccionada".
+      - Si la base de datos no tiene ninguna materia registrada, el
+        selector muestra solo la opcion "Agregar nueva materia" y un
+        hint "Selecciona una materia"; el guardado avisa que falta
+        elegir materia.
+      - Se conservo intacta la firma del constructor
+        (AniadirTareaDialog({onCreated})), por lo que home_screen.dart y
+        tareas_tab.dart no necesitaron cambios.
+
+
+RESULTADO ITERACION 2
+---------------------
+- La materia de una nueva tarea se elige desde un desplegable poblado
+  con datos reales de la base de datos.
+- La opcion "Agregar nueva materia" queda lista y cableada; solo falta
+  que se implemente la seccion real para que el flujo quede completo.
+- El dialogo se actualiza solo al volver de esa opcion, asi que la
+  integracion futura no requerira tocar aniadirTarea.dart.

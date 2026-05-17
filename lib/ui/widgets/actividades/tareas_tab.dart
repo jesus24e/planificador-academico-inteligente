@@ -5,7 +5,7 @@ import 'package:planificador_academico_inteligente/data/repositories/subject_rep
 import 'package:planificador_academico_inteligente/entities/activity.dart';
 import 'tarea_item.dart';
 import 'tarea_detail_dialog.dart';
-// import 'nueva_tarea_dialog.dart'; // TODO: descomentar cuando se integre el nuevo botón "+ Nueva tarea"
+import 'package:planificador_academico_inteligente/ui/widgets/home/aniadirTarea.dart';
 
 class TareasTab extends StatefulWidget {
   const TareasTab({super.key});
@@ -99,13 +99,12 @@ class _TareasTabState extends State<TareasTab> {
     );
   }
 
-  // TODO: descomentar cuando se integre el nuevo botón "+ Nueva tarea"
-  // void _abrirNuevaTarea() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => NuevaTareaDialog(onCreated: _cargar),
-  //   );
-  // }
+  void _abrirNuevaTarea() {
+    showDialog(
+      context: context,
+      builder: (_) => AniadirTareaDialog(onCreated: _cargar),
+    );
+  }
 
   Future<void> _eliminar(Activity activity) async {
     if (activity.id == null) return;
@@ -141,7 +140,7 @@ class _TareasTabState extends State<TareasTab> {
                 style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
               ElevatedButton.icon(
-                onPressed: null, // TODO: reconectar a _abrirNuevaTarea cuando se integre el nuevo botón
+                onPressed: _abrirNuevaTarea,
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('Nueva tarea'),
                 style: ElevatedButton.styleFrom(

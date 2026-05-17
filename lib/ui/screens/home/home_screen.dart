@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
 
+  @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
@@ -96,7 +97,13 @@ class _HomeScreenState extends State<HomeScreen> {
     child: FilledButton(
       onPressed: () => showDialog(
         context: context,
-        builder: (context) => const AniadirTareaDialog(),
+        builder: (context) => AniadirTareaDialog(
+          onCreated: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Tarea guardada")),
+            );
+          },
+        ),
       ),
       style: FilledButton.styleFrom(
         backgroundColor: Colors.green,

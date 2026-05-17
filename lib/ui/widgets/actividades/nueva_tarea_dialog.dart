@@ -1,3 +1,8 @@
+// ARCHIVO NO USADO / DEPRECADO
+// Este dialogo fue reemplazado por AniadirTareaDialog (lib/ui/widgets/home/aniadirTarea.dart),
+// que es la implementacion oficial integrada tras el merge del equipo.
+// Se conserva comentado unicamente como referencia historica. No se importa en ningun lado.
+/*
 import 'package:flutter/material.dart';
 import 'package:planificador_academico_inteligente/data/repositories/activity_repository.dart';
 import 'package:planificador_academico_inteligente/data/repositories/subject_repository.dart';
@@ -301,3 +306,4 @@ class _NuevaTareaDialogState extends State<NuevaTareaDialog> {
     );
   }
 }
+*/
