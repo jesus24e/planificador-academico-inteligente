@@ -118,6 +118,27 @@ class ActivityDao {
     );
   }
 
+  Future<List<Activity>> getEnPrioridad() async {
+    final db = await _db.database;
+    final response = await db.query(
+      _table,
+      where: "prioridad_estado = ?",
+      whereArgs: [Activity.prioridadEnLista],
+      orderBy: "fecha_limite ASC",
+    );
+    return response.map((e) => _fromMap(e)).toList();
+  }
+
+  Future<int> setPrioridadEstado(int id, int estado) async {
+    final db = await _db.database;
+    return await db.update(
+      _table,
+      {'prioridad_estado': estado},
+      where: "id = ?",
+      whereArgs: [id],
+    );
+  }
+
   Map<String, dynamic> _toMap(Activity activity) {
     final map = <String, dynamic>{
       'nombre': activity.nombre,
@@ -128,6 +149,7 @@ class ActivityDao {
       'horas_dedicadas': activity.horasDedicadas,
       'fecha_limite': activity.fechaLimite.toIso8601String(),
       'completada': activity.completada ? 1 : 0,
+      'prioridad_estado': activity.prioridadEstado,
     };
     if (activity.id != null) map['id'] = activity.id;
     return map;
@@ -144,6 +166,7 @@ class ActivityDao {
       horasDedicadas: (map['horas_dedicadas'] as int?) ?? 0,
       fechaLimite: DateTime.parse(map['fecha_limite'] as String),
       completada: ((map['completada'] as int?) ?? 0) == 1,
+      prioridadEstado: (map['prioridad_estado'] as int?) ?? 0,
     );
   }
 }
