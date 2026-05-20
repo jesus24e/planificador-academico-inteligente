@@ -3,6 +3,7 @@ import 'package:planificador_academico_inteligente/data/repositories/activity_re
 import 'package:planificador_academico_inteligente/data/repositories/subject_repository.dart';
 import 'package:planificador_academico_inteligente/entities/activity.dart';
 import 'package:planificador_academico_inteligente/entities/subject.dart';
+import 'package:planificador_academico_inteligente/ui/widgets/actividades/subject_form_dialog.dart';
 
 class AniadirTareaDialog extends StatefulWidget {
   final VoidCallback? onCreated;
@@ -74,20 +75,11 @@ class _AniadirTareaDialogState extends State<AniadirTareaDialog> {
   }
 
   Future<void> _abrirNuevaMateria() async {
-    await showDialog(
+    final creada = await showDialog<Subject>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Agregar nueva materia"),
-        content: const Text("En desarrollo"),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Aceptar"),
-          ),
-        ],
-      ),
+      builder: (_) => const SubjectFormDialog(),
     );
-    await _cargarMaterias();
+    await _cargarMaterias(seleccionar: creada?.nombre);
   }
 
   Future<void> _guardar() async {

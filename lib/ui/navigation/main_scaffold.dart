@@ -12,14 +12,27 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  int _currentIndex =2;
+  int _currentIndex = 2;
 
-  final List<Widget> _screens = const [
-    CalendarScreen(),
-    ActivitieScreen(),
-    HomeScreen(),
-    SettingsScreen(),
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
+  final GlobalKey<CalendarScreenState> _calendarKey =
+      GlobalKey<CalendarScreenState>();
+
+  late final List<Widget> _screens = [
+    CalendarScreen(key: _calendarKey),
+    const ActivitieScreen(),
+    HomeScreen(key: _homeKey),
+    const SettingsScreen(),
   ];
+
+  void _onTabChanged(int index) {
+    setState(() => _currentIndex = index);
+    if (index == 0) {
+      _calendarKey.currentState?.refrescar();
+    } else if (index == 2) {
+      _homeKey.currentState?.refrescar();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +40,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: _onTabChanged,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_outlined),

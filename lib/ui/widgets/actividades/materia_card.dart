@@ -4,12 +4,16 @@ class MateriaCard extends StatelessWidget {
   final String nombre;
   final String profesor;
   final String horario;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const MateriaCard({
     super.key,
     required this.nombre,
     required this.profesor,
     required this.horario,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -82,7 +86,7 @@ class MateriaCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                onPressed: () {}, // todo editar
+                onPressed: onEdit,
                 icon: const Icon(
                   Icons.edit_outlined,
                   size: 18,
@@ -93,7 +97,7 @@ class MateriaCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () {}, // todo eliminar
+                onPressed: onDelete,
                 icon: const Icon(
                   Icons.delete_outline,
                   size: 18,

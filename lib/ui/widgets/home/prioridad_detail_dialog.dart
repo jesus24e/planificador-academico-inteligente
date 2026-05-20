@@ -44,7 +44,12 @@ class PrioridadDetailDialog extends StatelessWidget {
 
     if (activity.id != null) {
       try {
-        await ActivityRepository().delete(activity.id!);
+        final repo = ActivityRepository();
+        await repo.setCompletada(activity.id!, true);
+        await repo.setPrioridadEstado(
+          activity.id!,
+          Activity.prioridadNinguno,
+        );
       } catch (_) {}
     }
     onChanged();

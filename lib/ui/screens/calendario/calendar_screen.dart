@@ -9,10 +9,10 @@ class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  State<CalendarScreen> createState() => CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<Activity> eventosCalendario = [];
@@ -26,15 +26,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _loadActivities();
   }
 
+  Future<void> refrescar() => _loadActivities();
+
   Future<void> _loadActivities() async {
     try {
       final actividades = await _activityRepository.getAll();
-
+      if (!mounted) return;
       setState(() {
         eventosCalendario = sortByPriority(actividades);
         _isLoading = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         eventosCalendario = [];
         _isLoading = false;

@@ -399,3 +399,301 @@ Nota
   lista en memoria (cargada una sola vez), una tarea recien vencida
   tiene fecha pasada y nunca cumple la condicion de fecha futura del
   auto-agregado, asi que no hay conflicto entre ambas operaciones.
+
+
+===========================================================================
+Iteracion 6 - Seccion "Mis materias" + bugfixes
+===========================================================================
+
+Se implemento toda la seccion de Mis materias y se corrigieron tres
+bugs detectados en la app.
+
+
+[17] Archivo: database_helper.dart  (MODIFICADO)
+     Ubicacion: lib/data/database/database_helper.dart
+     Proposito:
+      - Se incremento "dbVersion" de 4 a 5.
+      - Se agrego "_migrateToV5" que reconstruye la tabla actividades
+        para eliminar un CHECK obsoleto sobre la columna "tipo".
+      - CONTEXTO: en la version 2 se habia creado la tabla con CHECK
+        (tipo IN ('tarea','examen','proyecto')). Aunque _createTables ya
+        no incluye ese CHECK desde la v4, los usuarios que instalaron la
+        app en v2 conservaban el CHECK incrustado, porque las migraciones
+        v3 y v4 solo anaden columnas (ALTER TABLE ADD COLUMN) y no tocan
+        constraints. Al guardar una tarea con tipo "actividad" la BD lo
+        rechazaba. La v5 corrige esto reconstruyendo la tabla con el
+        mismo patron usado en _migrateToV2 (create new + copy + drop +
+        rename), preservando las columnas "completada" y
+        "prioridad_estado" anadidas en v3 y v4.
+
+
+[18] Archivo: subject_dao.dart  (MODIFICADO)
+     Ubicacion: lib/data/database/dataAccessObject/subject_dao.dart
+     Proposito:
+      - "findByNombreYProfesor(nombre, profesor, {excluirId})": busca
+        una materia con el mismo nombre Y profesor (case-insensitive
+        gracias a COLLATE NOCASE). Permite excluir un id (para que al
+        editar no se autodetecte como duplicada).
+      - "countTareasAsociadas(nombreMateria)": cuenta tareas que
+        referencian una materia, para poder informar al usuario antes
+        de eliminarla.
+
+
+[19] Archivo: subject_repository.dart  (MODIFICADO)
+     Ubicacion: lib/data/repositories/subject_repository.dart
+     Proposito:
+      - Se expusieron findByNombreYProfesor y countTareasAsociadas.
+
+
+[20] Archivo: subject_form_dialog.dart  (NUEVO)
+     Ubicacion: lib/ui/widgets/actividades/subject_form_dialog.dart
+     Proposito:
+      - Dialogo REUTILIZABLE para crear o editar una materia.
+      - Recibe un Subject opcional: si viene null el dialogo crea una
+        nueva; si viene una instancia, edita esa. El titulo y el boton
+        de accion cambian segun el modo.
+      - Campos:
+          * Nombre: obligatorio.
+          * Profesor: obligatorio.
+          * Horario: opcional.
+          * Color: opcional.
+      - Validacion de duplicado: antes de insertar/actualizar consulta
+        findByNombreYProfesor con excluirId = id actual (para que al
+        editar la misma materia no se autodetecte). Si encuentra una
+        coincidencia, muestra un AlertDialog "La materia solicitada ya
+        existe, no es necesario crear otra." y NO guarda.
+      - Al guardar correctamente, retorna la Subject creada/actualizada
+        por Navigator.pop, ademas de invocar onSaved si fue provisto.
+        Esto permite que quien lo abrio pueda preseleccionar la materia
+        recien creada (lo aprovecha aniadirTarea.dart).
+
+
+[21] Archivo: materia_card.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/actividades/materia_card.dart
+     Proposito:
+      - Se anadieron los callbacks opcionales onEdit y onDelete.
+      - Los botones de editar y eliminar ahora invocan esos callbacks
+        en lugar de tener cuerpos vacios.
+      - El widget sigue siendo agnostico de la fuente de datos.
+
+
+[22] Archivo: materias_tab.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/actividades/materias_tab.dart
+     Proposito:
+      - Se reescribio de StatelessWidget con datos hardcoded (5 cards
+        identicas) a StatefulWidget que carga las materias reales desde
+        SubjectRepository.getAll.
+      - Boton "Nueva materia": ahora abre SubjectFormDialog en modo
+        creacion. Al cerrarse el dialogo, la lista se recarga.
+      - Boton de editar de cada card: abre SubjectFormDialog en modo
+        edicion (pasandole la materia).
+      - Boton de eliminar de cada card: muestra un AlertDialog "¿Estas
+        seguro de que quieres eliminar esta materia?" con Si/No. Si el
+        usuario confirma:
+          a) Se consulta countTareasAsociadas. Si hay > 0, se muestra
+             otro AlertDialog informando que la materia tiene N tareas
+             asociadas y NO se elimina (respeta la FK ON DELETE
+             RESTRICT que ya estaba en la BD).
+          b) Si no tiene tareas asociadas, se elimina y la lista se
+             refresca.
+      - Estados vacio y de carga incluidos.
+      - RefreshIndicator para pull-to-refresh.
+
+
+[23] Archivo: aniadirTarea.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/home/aniadirTarea.dart
+     Proposito:
+      - Se reemplazo el placeholder "En desarrollo" del metodo
+        _abrirNuevaMateria por una llamada a SubjectFormDialog. Asi la
+        opcion "Agregar nueva materia" del selector ya es funcional.
+      - Tras crear la materia, _cargarMaterias se invoca con
+        seleccionar = creada.nombre, de modo que la materia recien
+        creada queda preseleccionada en el dropdown al volver al
+        dialogo de nueva tarea. La logica que ya estaba en
+        _cargarMaterias para preseleccionar por nombre encajaba
+        perfecto, asi que no hubo que cambiarla.
+
+
+[24] Archivo: home_screen.dart  (MODIFICADO)
+     Ubicacion: lib/ui/screens/home/home_screen.dart
+     Proposito:
+      - Se hizo publica la clase del State: "_HomeScreenState" ->
+        "HomeScreenState". Era necesario para poder declarar un
+        GlobalKey<HomeScreenState> desde MainScaffold.
+      - Se agrego el metodo publico "refrescar()" que delega en
+        _cargar(). Lo invoca MainScaffold cuando el usuario regresa a
+        la pestana de Inicio.
+
+
+[25] Archivo: calendar_screen.dart  (MODIFICADO)
+     Ubicacion: lib/ui/screens/calendario/calendar_screen.dart
+     Proposito:
+      - Mismo cambio que home_screen: clase del State pasa de privada
+        a publica ("CalendarScreenState"), y se agrega metodo publico
+        "refrescar()" que delega en _loadActivities.
+      - Adicionalmente se anadieron "if (!mounted) return;" antes de
+        cada setState dentro de _loadActivities, para evitar errores si
+        el refresh se dispara cerca del dispose.
+
+
+[26] Archivo: main_scaffold.dart  (MODIFICADO)
+     Ubicacion: lib/ui/navigation/main_scaffold.dart
+     Proposito:
+      - Se anadieron dos GlobalKey: una para HomeScreen y otra para
+        CalendarScreen. Se le pasan como key en la construccion del
+        IndexedStack.
+      - El "onTap" del BottomNavigationBar se reemplazo por un metodo
+        "_onTabChanged" que, ademas de cambiar el indice, invoca
+        refrescar() en la pantalla correspondiente cuando el usuario
+        regresa a Inicio (index 2) o a Calendario (index 0).
+      - Por que era necesario: MainScaffold usa IndexedStack, que
+        mantiene todas las pantallas en memoria. initState corre una
+        sola vez por pantalla durante toda la vida de la app. Esto hacia
+        que las tareas creadas o modificadas desde otras pestanas no se
+        reflejaran en Inicio ni en Calendario hasta reiniciar la app.
+        Con esta solucion, cada vez que el usuario vuelve a Inicio o
+        Calendario, esas pantallas se recargan desde la BD y reflejan
+        los cambios.
+
+
+RESULTADO ITERACION 6
+---------------------
+
+Mis materias funcional:
+- El boton "Nueva materia" abre el formulario, valida nombre+profesor
+  duplicado y guarda en BD.
+- Cada card tiene editar (abre el mismo formulario en modo edicion) y
+  eliminar (con confirmacion y proteccion contra borrar materias con
+  tareas asociadas).
+- "Agregar nueva materia" del selector en el dialogo de nueva tarea
+  reutiliza el MISMO SubjectFormDialog. Un solo lugar de verdad para
+  el formulario de materia.
+
+Bugs corregidos:
+- "Actividad" ya puede usarse como tipo al guardar tareas (migracion v5
+  elimina el CHECK obsoleto).
+- La Lista de prioridades en Inicio se refresca automaticamente al
+  volver a esa pestana, asi que cualquier cambio hecho desde otras
+  pestanas se refleja sin tener que cambiar las semanas del calendario.
+- El calendario de la pestana Calendario tambien se actualiza al volver
+  a la pestana.
+
+
+Notas adicionales
+-----------------
+- No se modifico la entidad Subject ni la entidad Activity en esta
+  iteracion. Toda la sumatoria de cambios se concentro en una migracion
+  de BD, dos metodos nuevos en SubjectDao/Repository, un widget nuevo
+  (SubjectFormDialog) y los archivos de UI que lo consumen.
+- La materia, al crearse desde el selector de aniadirTarea, queda
+  preseleccionada automaticamente, asi el usuario no tiene que volver a
+  buscarla.
+
+
+===========================================================================
+Iteracion 7 - Limpieza: quitar campo "color" del formulario de materia
+===========================================================================
+
+[27] Archivo: subject_form_dialog.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/actividades/subject_form_dialog.dart
+     Proposito:
+      - Se quito el TextField "Color" del formulario porque era un
+        campo "muerto": se persistia en BD pero ningun widget de la UI
+        leia ese valor para pintar nada, lo que generaba confusion al
+        usuario (podia escribir cualquier cosa sin ningun efecto).
+      - Se eliminaron la declaracion, inicializacion y dispose del
+        controlador _colorCtrl.
+      - En _guardar se quito la lectura del color:
+          * Al editar, copyWith se invoca sin pasar "color", asi se
+            conserva el valor previo (si lo habia) sin perdida.
+          * Al crear, el constructor Subject usa el default vacio.
+      - El campo "color" sigue existiendo en la entidad Subject y en la
+        BD, por lo que NO se rompe compatibilidad ni se pierde dato
+        alguno. Queda listo para cuando se decida implementarlo como
+        un selector de paleta real con efecto visual en MateriaCard,
+        etiquetas de tarea y markers de calendario.
+
+
+===========================================================================
+Iteracion 8 - Mejora UX: dias + rango horario en formulario de materia
+===========================================================================
+
+[28] Archivo: subject_form_dialog.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/actividades/subject_form_dialog.dart
+     Proposito:
+      - Se reemplazo el TextField libre de "Horario" por dos controles
+        nuevos:
+          * "Dias": siete FilterChip (Lun, Mar, Mié, Jue, Vie, Sáb, Dom)
+            que el usuario activa/desactiva. Multiselect, libre.
+          * "Horario": dos OutlinedButton que abren showTimePicker para
+            elegir hora de inicio y hora de fin. Con boton X para
+            limpiar ambas.
+      - DECISION DE PERSISTENCIA: para no tocar la BD (regla 1) se sigue
+        guardando todo en la misma columna "horario" (TEXT), con un
+        formato consistente: "Lun, Mié, Vie · 08:00-10:00". Si solo se
+        seleccionaron dias o solo se seleccionaron horas, se guarda
+        solo esa parte. Si no se selecciona nada, se guarda "".
+      - VALIDACIONES nuevas: no se permite definir solo una hora del
+        rango (debe ser inicio Y fin, o ninguna), y la hora de inicio
+        debe ser anterior a la de fin. Se muestra mensaje via SnackBar.
+      - EDICION: al abrir una materia existente, "_parsearHorarioExistente"
+        intenta reconstruir los chips activos y las horas a partir del
+        string guardado. Si el formato encaja (separador "·", dias
+        validos, horas en HH:MM y rango con guion), se precarga todo.
+        Si el formato no es el nuevo (por ejemplo, una materia simulada
+        con horario "Lun/Mié 10:00am"), se muestra un aviso amarillo
+        "Horario anterior: ... Se reemplazará al guardar." Asi el usuario
+        sabe que pasara y no se rompe la edicion de materias viejas.
+      - Se removieron los rastros del antiguo "_horarioCtrl" (controller
+        de TextField); ahora todo el estado vive en
+        "_diasSeleccionados", "_horaInicio" y "_horaFin".
+
+Notas adicionales
+-----------------
+- Mantener todo en una sola columna TEXT es una decision deliberada de
+  minima invasion. Si en el futuro se quiere consultar por dia (por
+  ejemplo, "que materias tengo los lunes"), valdria la pena migrar a
+  columnas separadas. El formato actual es predecible y parseable, asi
+  que esa migracion seria sencilla cuando haga falta.
+- MateriaCard sigue mostrando el campo "horario" tal cual. Con el nuevo
+  formato luce mas legible que el anterior libre.
+
+
+===========================================================================
+Iteracion 9 - Concluir tarea: marcarla completada en vez de eliminarla
+===========================================================================
+
+[29] Archivo: prioridad_detail_dialog.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/home/prioridad_detail_dialog.dart
+     Proposito:
+      - El boton "Concluir" de la Lista de prioridades ya no BORRA la
+        tarea de la base de datos. Ahora hace dos cosas:
+          1) setCompletada(id, true): marca la tarea como completada,
+             lo que hace que aparezca en "Mis tareas" con el estilo de
+             completada (fondo gris, etiqueta verde, texto tachado) que
+             ya existia desde la iteracion 3.
+          2) setPrioridadEstado(id, prioridadNinguno): la saca de la
+             Lista de prioridades.
+      - Asi la tarea se conserva como historico en "Mis tareas" en vez
+        de desaparecer del todo, mejorando accesibilidad y trazabilidad.
+
+Por que estado "ninguno" y no "descartada"
+------------------------------------------
+- La logica de auto-agregado en home_screen ya excluye tareas completadas
+  ("if (a.completada) continue;"), por lo que la tarea concluida no
+  reaparecera sola en la Lista de prioridades aunque su fecha caiga en
+  las 2 semanas del calendario.
+- Reservar el estado 2 (descartada) solo para acciones explicitas del
+  usuario mantiene clara la semantica de cada estado.
+
+Efectos colaterales (verificados, sin cambios adicionales)
+----------------------------------------------------------
+- El dialogo "Agrega la tarea" del Inicio ya filtra completadas
+  ("!a.completada"), por lo que la tarea concluida no reaparece como
+  opcion para volver a sumarla a prioridades.
+- El calendario sigue mostrando la tarea en su fecha, coherente con
+  conservarla como historico.
+- El contador "vencen hoy" del Inicio SI sigue contando completadas si
+  su fecha es hoy. No se modifico porque no formaba parte de lo
+  solicitado; si en el futuro se quiere excluirlas, es un filtro de
+  una linea en home_screen.

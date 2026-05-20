@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const String dbName = "planificador.db";
-  static const int dbVersion = 4;
+  static const int dbVersion = 5;
 
   static const String tableActividades = "actividades";
   static const String tableMaterias = "materias";
@@ -84,6 +84,9 @@ class DatabaseHelper {
     if (oldVersion < 4) {
       await _migrateToV4(db);
     }
+    if (oldVersion < 5) {
+      await _migrateToV5(db);
+    }
   }
 
   Future<void> _migrateToV2(Database db) async {
@@ -153,6 +156,54 @@ class DatabaseHelper {
     await db.execute(
       'ALTER TABLE $tableActividades ADD COLUMN prioridad_estado INTEGER NOT NULL DEFAULT 0 CHECK (prioridad_estado IN (0,1,2))',
     );
+  }
+
+  Future<void> _migrateToV5(Database db) async {
+    await db.execute('PRAGMA foreign_keys = OFF');
+    await db.transaction((txn) async {
+      await txn.execute('''
+        CREATE TABLE actividades_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL,
+          materia TEXT NOT NULL COLLATE NOCASE,
+          tipo TEXT NOT NULL,
+          descripcion TEXT NOT NULL DEFAULT '',
+          prioridad TEXT NOT NULL CHECK (prioridad IN ('alta','media','baja')),
+          horas_dedicadas INTEGER NOT NULL DEFAULT 0 CHECK (horas_dedicadas >= 0),
+          fecha_limite TEXT NOT NULL,
+          completada INTEGER NOT NULL DEFAULT 0 CHECK (completada IN (0,1)),
+          prioridad_estado INTEGER NOT NULL DEFAULT 0 CHECK (prioridad_estado IN (0,1,2)),
+          FOREIGN KEY (materia) REFERENCES $tableMaterias(nombre)
+            ON UPDATE CASCADE
+            ON DELETE RESTRICT
+        )
+      ''');
+
+      await txn.execute('''
+        INSERT INTO actividades_new
+          (id, nombre, materia, tipo, descripcion, prioridad, horas_dedicadas,
+           fecha_limite, completada, prioridad_estado)
+        SELECT id, nombre, materia, tipo, descripcion, prioridad, horas_dedicadas,
+               fecha_limite, completada, prioridad_estado
+        FROM $tableActividades
+      ''');
+
+      await txn.execute('DROP TABLE $tableActividades');
+      await txn.execute(
+        'ALTER TABLE actividades_new RENAME TO $tableActividades',
+      );
+
+      await txn.execute(
+        'CREATE INDEX idx_actividades_materia ON $tableActividades(materia)',
+      );
+      await txn.execute(
+        'CREATE INDEX idx_actividades_fecha_limite ON $tableActividades(fecha_limite)',
+      );
+      await txn.execute(
+        'CREATE INDEX idx_actividades_prioridad ON $tableActividades(prioridad)',
+      );
+    });
+    await db.execute('PRAGMA foreign_keys = ON');
   }
 
   Future<void> close() async {

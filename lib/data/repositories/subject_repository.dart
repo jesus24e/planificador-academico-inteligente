@@ -13,4 +13,9 @@ class SubjectRepository {
   Future<int> delete(int id) => _dao.deleteById(id);
   Future<int> deleteAll() => _dao.deleteAll();
   Future<int> count() => _dao.count();
+  Future<Subject?> findByNombreYProfesor(String nombre, String profesor,
+          {int? excluirId}) =>
+      _dao.findByNombreYProfesor(nombre, profesor, excluirId: excluirId);
+  Future<int> countTareasAsociadas(String nombreMateria) =>
+      _dao.countTareasAsociadas(nombreMateria);
 }

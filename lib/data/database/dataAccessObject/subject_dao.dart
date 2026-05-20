@@ -36,6 +36,28 @@ class SubjectDao {
     return _fromMap(response.first);
   }
 
+  Future<Subject?> findByNombreYProfesor(
+    String nombre,
+    String profesor, {
+    int? excluirId,
+  }) async {
+    final db = await _db.database;
+    final where = excluirId == null
+        ? "nombre = ? COLLATE NOCASE AND profesor = ? COLLATE NOCASE"
+        : "nombre = ? COLLATE NOCASE AND profesor = ? COLLATE NOCASE AND id != ?";
+    final args = excluirId == null
+        ? [nombre, profesor]
+        : [nombre, profesor, excluirId];
+    final response = await db.query(
+      _table,
+      where: where,
+      whereArgs: args,
+      limit: 1,
+    );
+    if (response.isEmpty) return null;
+    return _fromMap(response.first);
+  }
+
   Future<int> insert(Subject subject) async {
     final db = await _db.database;
     return await db.insert(_table, _toMap(subject));
@@ -83,6 +105,15 @@ class SubjectDao {
   Future<int> count() async {
     final db = await _db.database;
     final result = await db.rawQuery('SELECT COUNT(*) AS c FROM $_table');
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<int> countTareasAsociadas(String nombreMateria) async {
+    final db = await _db.database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) AS c FROM ${DatabaseHelper.tableActividades} WHERE materia = ? COLLATE NOCASE',
+      [nombreMateria],
+    );
     return Sqflite.firstIntValue(result) ?? 0;
   }
 

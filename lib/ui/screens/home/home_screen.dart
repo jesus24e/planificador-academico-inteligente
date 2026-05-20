@@ -12,10 +12,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   final ActivityRepository _activityRepo = ActivityRepository();
   final SubjectRepository _subjectRepo = SubjectRepository();
 
@@ -32,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _cargar();
   }
+
+  Future<void> refrescar() => _cargar();
 
   Future<void> _cargar() async {
     setState(() => _cargando = true);
