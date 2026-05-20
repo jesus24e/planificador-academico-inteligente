@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const String dbName = "planificador.db";
-  static const int dbVersion = 3;
+  static const int dbVersion = 4;
 
   static const String tableActividades = "actividades";
   static const String tableMaterias = "materias";
@@ -56,6 +56,7 @@ class DatabaseHelper {
         horas_dedicadas INTEGER NOT NULL DEFAULT 0 CHECK (horas_dedicadas >= 0),
         fecha_limite TEXT NOT NULL,
         completada INTEGER NOT NULL DEFAULT 0 CHECK (completada IN (0,1)),
+        prioridad_estado INTEGER NOT NULL DEFAULT 0 CHECK (prioridad_estado IN (0,1,2)),
         FOREIGN KEY (materia) REFERENCES $tableMaterias(nombre)
           ON UPDATE CASCADE
           ON DELETE RESTRICT
@@ -79,6 +80,9 @@ class DatabaseHelper {
     }
     if (oldVersion < 3) {
       await _migrateToV3(db);
+    }
+    if (oldVersion < 4) {
+      await _migrateToV4(db);
     }
   }
 
@@ -142,6 +146,12 @@ class DatabaseHelper {
   Future<void> _migrateToV3(Database db) async {
     await db.execute(
       'ALTER TABLE $tableActividades ADD COLUMN completada INTEGER NOT NULL DEFAULT 0 CHECK (completada IN (0,1))',
+    );
+  }
+
+  Future<void> _migrateToV4(Database db) async {
+    await db.execute(
+      'ALTER TABLE $tableActividades ADD COLUMN prioridad_estado INTEGER NOT NULL DEFAULT 0 CHECK (prioridad_estado IN (0,1,2))',
     );
   }
 

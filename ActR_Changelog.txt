@@ -182,3 +182,220 @@ RESULTADO ITERACION 2
   que se implemente la seccion real para que el flujo quede completo.
 - El dialogo se actualiza solo al volver de esa opcion, asi que la
   integracion futura no requerira tocar aniadirTarea.dart.
+
+===========================================================================
+Iteracion 3 - Reestructuracion de la pantalla de Inicio
+===========================================================================
+
+Se reestructuro la pantalla de Inicio: el boton ahora agrega tareas
+existentes a la Lista de prioridades, la lista se conecta a la base de
+datos, las tareas se pueden gestionar (concluir, quitar, editar), se
+auto-agregan las tareas con fecha dentro de las 2 semanas del calendario
+y los recuadros amarillos muestran conteos reales.
+
+
+[6] Archivo: database_helper.dart  (MODIFICADO)
+    Ubicacion: lib/data/database/database_helper.dart
+    Proposito:
+      - Se incremento "dbVersion" de 3 a 4.
+      - Se agrego la columna "prioridad_estado INTEGER NOT NULL DEFAULT 0
+        CHECK (prioridad_estado IN (0,1,2))" a la tabla actividades.
+        Representa tres estados: 0 = nunca tocada, 1 = en la lista de
+        prioridades, 2 = descartada manualmente por el usuario.
+      - Se anadio "_migrateToV4" que ejecuta un ALTER TABLE para agregar
+        esa columna en bases de datos existentes (migracion no
+        destructiva).
+      - El tercer estado (descartada) es necesario para que, si el
+        usuario quita una tarea de prioridades con "Eliminar de
+        prioridad", el auto-agregado por calendario NO la vuelva a
+        meter. Con un simple booleano no se podria distinguir "nunca
+        tocada" de "quitada a proposito".
+
+
+[7] Archivo: activity.dart  (MODIFICADO)
+    Ubicacion: lib/entities/activity.dart
+    Proposito:
+      - Se agrego el campo "int prioridadEstado" (default 0).
+      - Se agregaron las constantes prioridadNinguno (0), prioridadEnLista
+        (1) y prioridadDescartada (2) para no usar numeros magicos.
+      - Se agrego el getter "enPrioridad" (true si prioridadEstado == 1).
+      - "copyWith" se extendio para incluir el nuevo campo.
+
+
+[8] Archivo: activity_dao.dart  (MODIFICADO)
+    Ubicacion: lib/data/database/dataAccessObject/activity_dao.dart
+    Proposito:
+      - "_toMap" y "_fromMap" ahora persisten/leen "prioridad_estado".
+      - Se agrego "getEnPrioridad()" que devuelve solo las actividades
+        con prioridad_estado = 1, ordenadas por fecha.
+      - Se agrego "setPrioridadEstado(id, estado)" para cambiar el estado
+        de prioridad de una tarea.
+
+
+[9] Archivo: activity_repository.dart  (MODIFICADO)
+    Ubicacion: lib/data/repositories/activity_repository.dart
+    Proposito:
+      - Se expusieron los metodos getEnPrioridad y setPrioridadEstado.
+
+
+[10] Archivo: agregar_prioridad_dialog.dart  (NUEVO)
+     Ubicacion: lib/ui/widgets/home/agregar_prioridad_dialog.dart
+     Proposito:
+      - Dialogo "Agrega la tarea" que abre el boton "Agregar tarea".
+      - Lista las tareas registradas en la base de datos que NO estan ya
+        en la Lista de prioridades y que no estan completadas.
+      - Al tocar una tarea, la marca con prioridad_estado = 1 (en lista)
+        y refresca; la tarea desaparece de este selector y aparece en la
+        Lista de prioridades del Inicio.
+
+
+[11] Archivo: prioridad_detail_dialog.dart  (NUEVO)
+     Ubicacion: lib/ui/widgets/home/prioridad_detail_dialog.dart
+     Proposito:
+      - Dialogo de detalle que se abre al tocar una tarea de la Lista de
+        prioridades. Muestra todos los datos de la tarea y tres botones:
+          * "Concluir": abre un dialogo "¿Has concluido esta tarea?".
+            Si se elige "Si", la tarea se elimina de la base de datos
+            (y por lo tanto desaparece de la Lista de prioridades y de
+            "Mis tareas"). Si se elige "No", regresa al dialogo anterior.
+          * "Eliminar de prioridad": marca la tarea con prioridad_estado
+            = 2 (descartada). Sale de la Lista de prioridades pero sigue
+            existiendo en "Mis tareas". No se vuelve a auto-agregar.
+          * "Editar": abre el dialogo TareaDetailDialog ya existente
+            (el mismo que se usa en "Mis tareas" para editar).
+
+
+[12] Archivo: priorityList.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/home/priorityList.dart
+     Proposito:
+      - Se reescribio de funciones sueltas a widgets de clase
+        (PriorityList). Antes mostraba sortByPriority(activityList), es
+        decir, toda la lista de simulacion en memoria; ahora recibe las
+        actividades reales (en prioridad) que le pasa HomeScreen desde
+        la base de datos.
+      - Cada item es ahora pulsable (InkWell) y abre
+        PrioridadDetailDialog.
+      - Se muestran estados vacios y de carga.
+
+
+[13] Archivo: cardsRow.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/home/cardsRow.dart
+     Proposito:
+      - Se reescribio de funciones sueltas al widget de clase CardsRow,
+        que recibe tres conteos y los muestra (antes los numeros
+        "2", "0", "4" estaban escritos a mano).
+      - "actividades pendientes" = numero de tareas en la Lista de
+        prioridades.
+      - "vencen hoy" = numero de tareas cuya fecha limite es el dia de
+        hoy.
+      - "materias activas" = numero de materias registradas en
+        "Mis materias". NOTA: aun no existe un estado activo/inactivo
+        para las materias, asi que por ahora cuenta todas las materias.
+        Queda listo para el futuro: cuando se agregue ese estado, solo
+        habra que filtrar por el en HomeScreen.
+
+
+[14] Archivo: home_screen.dart  (MODIFICADO)
+     Ubicacion: lib/ui/screens/home/home_screen.dart
+     Proposito:
+      - Se conecto la pantalla a la base de datos: ya no usa
+        mapDateActivity ni activityList (datos de simulacion en
+        memoria). Carga las actividades reales con ActivityRepository.
+      - El boton verde cambio de texto de "Anadir tarea" a "Agregar
+        tarea" y de funcion: antes abria el dialogo de crear una tarea
+        nueva; ahora abre AgregarPrioridadDialog para sumar tareas
+        existentes a la Lista de prioridades.
+      - Se implemento la regla de auto-agregado: al cargar la pantalla
+        (y al cambiar de pagina en el calendario), las tareas con
+        prioridad_estado = 0 cuya fecha limite cae dentro de las 2
+        semanas visibles del calendario se marcan automaticamente como
+        "en prioridad". Las tareas descartadas (estado 2) se respetan y
+        no se reagregan.
+      - El calendario (eventLoader) ahora marca los dias segun las
+        actividades reales de la base de datos.
+      - Se calculan y pasan los tres conteos al widget CardsRow.
+      - Todas las acciones de los dialogos (agregar, concluir, quitar,
+        editar) refrescan la pantalla mediante un callback.
+
+
+RESULTADO ITERACION 3
+---------------------
+- El boton "Agregar tarea" suma tareas existentes a la Lista de
+  prioridades en lugar de crear tareas desde cero.
+- La Lista de prioridades se guarda en la base de datos y sobrevive al
+  cierre de la app.
+- Cada tarea de la lista se puede concluir (se borra de la base de
+  datos), quitar de prioridad (se conserva en Mis tareas) o editar.
+- Las tareas cuya fecha cae en las 2 semanas del calendario entran
+  solas a la lista; si el usuario las quita, no vuelven a entrar.
+- Los tres recuadros amarillos muestran conteos reales.
+
+Notas adicionales
+-----------------
+- "materias activas" cuenta por ahora todas las materias, porque la
+  entidad Subject todavia no tiene un campo de estado activo/inactivo.
+- El Inicio ya no depende de actividades_sim.dart; ese archivo sigue
+  usandose solo desde main.dart para la siembra inicial.
+
+
+===========================================================================
+Iteracion 4 - Opcion "Nueva tarea" dentro de "Agrega la tarea"
+===========================================================================
+
+[15] Archivo: agregar_prioridad_dialog.dart  (MODIFICADO)
+     Ubicacion: lib/ui/widgets/home/agregar_prioridad_dialog.dart
+     Proposito:
+      - Se agrego al final de la lista del dialogo "Agrega la tarea" una
+        opcion fija "Nueva tarea" (separada por un Divider).
+      - Esta opcion aparece siempre, incluso cuando no hay tareas
+        disponibles para agregar.
+      - Al seleccionarla se abre AniadirTareaDialog, el dialogo completo
+        de creacion de tarea (con su selector de materias). El usuario
+        puede realizar todo el proceso de alta de una tarea nueva.
+      - Al cerrar ese dialogo, la lista de "Agrega la tarea" se recarga,
+        de modo que la tarea recien creada aparece de inmediato como
+        disponible para agregarla a la Lista de prioridades.
+      - Se reestructuro el cuerpo del dialogo a un metodo _buildContenido
+        para poder mostrar la opcion "Nueva tarea" junto al estado vacio
+        o junto a la lista de tareas, segun corresponda.
+
+Nota
+----
+- Una tarea creada desde aqui se guarda en "Mis tareas" con estado de
+  prioridad 0 (no entra sola a la Lista de prioridades). Para sumarla,
+  el usuario la toca en la lista del mismo dialogo. Este es el flujo
+  esperado: el dialogo "Agrega la tarea" sirve para elegir que tareas
+  van a prioridades.
+
+
+===========================================================================
+Iteracion 5 - Fix: quitar tareas vencidas de la Lista de prioridades
+===========================================================================
+
+[16] Archivo: home_screen.dart  (MODIFICADO)
+     Ubicacion: lib/ui/screens/home/home_screen.dart
+     Proposito:
+      - Se agrego el metodo "_quitarVencidasDePrioridad", que se ejecuta
+        al cargar la pantalla (dentro de _cargar), antes del
+        auto-agregado por calendario.
+      - Recorre las tareas que estan en la Lista de prioridades
+        (prioridad_estado = 1) y, si su fecha de entrega es anterior al
+        dia de hoy, las cambia a prioridad_estado = 0. Asi salen de la
+        Lista de prioridades pero se mantienen en "Mis tareas".
+      - La comparacion se hace solo por dia (ignora la hora): una tarea
+        que vence HOY no se considera vencida, sigue en la lista y
+        ademas alimenta el contador "vencen hoy".
+      - Se eligio el estado 0 (ninguno) y no el 2 (descartada) para no
+        mezclar el significado "el usuario la quito a proposito" con
+        "se vencio". Como la fecha ya paso, el auto-agregado por
+        calendario tampoco la reincorpora (una fecha pasada nunca cae
+        en las 2 semanas futuras del calendario), por lo que el estado
+        0 es seguro y no provoca que la tarea reaparezca sola.
+
+Nota
+----
+- El orden de ejecucion es seguro: primero se quitan las vencidas y
+  luego corre el auto-agregado. Aunque ambos metodos recorren la misma
+  lista en memoria (cargada una sola vez), una tarea recien vencida
+  tiene fecha pasada y nunca cumple la condicion de fecha futura del
+  auto-agregado, asi que no hay conflicto entre ambas operaciones.

@@ -19,4 +19,7 @@ class ActivityRepository {
   Future<List<String>> getDistinctMaterias() => _dao.getDistinctMaterias();
   Future<int> setCompletada(int id, bool completada) =>
       _dao.setCompletada(id, completada);
+  Future<List<Activity>> getEnPrioridad() => _dao.getEnPrioridad();
+  Future<int> setPrioridadEstado(int id, int estado) =>
+      _dao.setPrioridadEstado(id, estado);
 }

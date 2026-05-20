@@ -1,4 +1,8 @@
 class Activity {
+  static const int prioridadNinguno = 0;
+  static const int prioridadEnLista = 1;
+  static const int prioridadDescartada = 2;
+
   final int? id;
   final String nombre;
   final String materia;
@@ -8,6 +12,7 @@ class Activity {
   final int horasDedicadas;
   final DateTime fechaLimite;
   final bool completada;
+  final int prioridadEstado;
 
   Activity({
     this.id,
@@ -19,7 +24,10 @@ class Activity {
     this.horasDedicadas = 0,
     required this.fechaLimite,
     this.completada = false,
+    this.prioridadEstado = prioridadNinguno,
   });
+
+  bool get enPrioridad => prioridadEstado == prioridadEnLista;
 
   Activity copyWith({
     int? id,
@@ -31,6 +39,7 @@ class Activity {
     int? horasDedicadas,
     DateTime? fechaLimite,
     bool? completada,
+    int? prioridadEstado,
   }) {
     return Activity(
       id: id ?? this.id,
@@ -42,6 +51,7 @@ class Activity {
       horasDedicadas: horasDedicadas ?? this.horasDedicadas,
       fechaLimite: fechaLimite ?? this.fechaLimite,
       completada: completada ?? this.completada,
+      prioridadEstado: prioridadEstado ?? this.prioridadEstado,
     );
   }
 }
