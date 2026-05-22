@@ -3,10 +3,12 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const String dbName = "planificador.db";
-  static const int dbVersion = 5;
+  static const int dbVersion = 7;
 
   static const String tableActividades = "actividades";
   static const String tableMaterias = "materias";
+  static const String tablePreferences = "user_preferences";
+  static const String tableSesiones = "sesiones_estudio";
 
   static final DatabaseHelper instance = DatabaseHelper._internal();
   static Database? _database;
@@ -72,7 +74,53 @@ class DatabaseHelper {
     await db.execute(
       'CREATE INDEX idx_actividades_prioridad ON $tableActividades(prioridad)',
     );
+
+    await db.execute(_sqlCreatePreferences());
+    await db.execute(_sqlSeedPreferences());
+    await db.execute(_sqlCreateSesiones());
+    await db.execute(
+      'CREATE INDEX idx_sesiones_actividad ON $tableSesiones(actividad_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_sesiones_fecha ON $tableSesiones(fecha)',
+    );
   }
+
+  static String _sqlCreateSesiones() => '''
+    CREATE TABLE $tableSesiones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      actividad_id INTEGER NOT NULL,
+      fecha TEXT NOT NULL,
+      hora_inicio TEXT NOT NULL,
+      hora_fin TEXT NOT NULL,
+      completada INTEGER NOT NULL DEFAULT 0 CHECK (completada IN (0,1)),
+      emergencia INTEGER NOT NULL DEFAULT 0 CHECK (emergencia IN (0,1)),
+      FOREIGN KEY (actividad_id) REFERENCES $tableActividades(id)
+        ON DELETE CASCADE
+    )
+  ''';
+
+  static String _sqlCreatePreferences() => '''
+    CREATE TABLE $tablePreferences (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      horas_por_dia INTEGER NOT NULL DEFAULT 3 CHECK (horas_por_dia BETWEEN 1 AND 12),
+      dia_lunes INTEGER NOT NULL DEFAULT 1 CHECK (dia_lunes IN (0,1)),
+      dia_martes INTEGER NOT NULL DEFAULT 1 CHECK (dia_martes IN (0,1)),
+      dia_miercoles INTEGER NOT NULL DEFAULT 0 CHECK (dia_miercoles IN (0,1)),
+      dia_jueves INTEGER NOT NULL DEFAULT 1 CHECK (dia_jueves IN (0,1)),
+      dia_viernes INTEGER NOT NULL DEFAULT 0 CHECK (dia_viernes IN (0,1)),
+      dia_sabado INTEGER NOT NULL DEFAULT 0 CHECK (dia_sabado IN (0,1)),
+      dia_domingo INTEGER NOT NULL DEFAULT 0 CHECK (dia_domingo IN (0,1)),
+      horario_preferente TEXT NOT NULL DEFAULT 'tarde' CHECK (horario_preferente IN ('manana','tarde','noche')),
+      recordatorio_sesiones INTEGER NOT NULL DEFAULT 1 CHECK (recordatorio_sesiones IN (0,1)),
+      alertas_evaluaciones INTEGER NOT NULL DEFAULT 1 CHECK (alertas_evaluaciones IN (0,1)),
+      riesgo_academico INTEGER NOT NULL DEFAULT 0 CHECK (riesgo_academico IN (0,1)),
+      hora_notificacion TEXT NOT NULL DEFAULT '08:00'
+    )
+  ''';
+
+  static String _sqlSeedPreferences() =>
+      'INSERT OR IGNORE INTO $tablePreferences (id) VALUES (1)';
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
@@ -86,6 +134,12 @@ class DatabaseHelper {
     }
     if (oldVersion < 5) {
       await _migrateToV5(db);
+    }
+    if (oldVersion < 6) {
+      await _migrateToV6(db);
+    }
+    if (oldVersion < 7) {
+      await _migrateToV7(db);
     }
   }
 
@@ -204,6 +258,21 @@ class DatabaseHelper {
       );
     });
     await db.execute('PRAGMA foreign_keys = ON');
+  }
+
+  Future<void> _migrateToV6(Database db) async {
+    await db.execute(_sqlCreatePreferences());
+    await db.execute(_sqlSeedPreferences());
+  }
+
+  Future<void> _migrateToV7(Database db) async {
+    await db.execute(_sqlCreateSesiones());
+    await db.execute(
+      'CREATE INDEX idx_sesiones_actividad ON $tableSesiones(actividad_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_sesiones_fecha ON $tableSesiones(fecha)',
+    );
   }
 
   Future<void> close() async {

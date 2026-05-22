@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/data/repositories/user_preferences_repository.dart';
+import 'package:planificador_academico_inteligente/entities/user_preferences.dart';
 
 const _gris = Color(0xFF6B7280);
 const _azul = Color(0xFF1E3A5F);
@@ -11,62 +13,108 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _ConfiguracionScreenState extends State<SettingsScreen> {
-  int _horasPorDia = 3;
-  final Map<String, bool> _dias = {
-    'L': true,
-    'M': true,
-    'X': false,
-    'J': true,
-    'V': false,
-    'S': false,
-    'D': false,
+  static const _opcionesHorario = {
+    UserPreferences.horarioManana: 'Mañana (6AM - 12PM)',
+    UserPreferences.horarioTarde: 'Tarde (12PM - 6PM)',
+    UserPreferences.horarioNoche: 'Noche (6PM - 12AM)',
   };
-  String _horario = 'Tarde (12PM - 6PM)';
-  bool _recordatorioSesiones = true;
-  bool _alertasEvaluaciones = true;
-  bool _riesgoAcademico = false;
-  TimeOfDay _horaNotificacion = const TimeOfDay(hour: 8, minute: 0);
+
+  final UserPreferencesRepository _repo = UserPreferencesRepository();
+
+  UserPreferences _prefs = const UserPreferences();
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final p = await _repo.get();
+      if (!mounted) return;
+      setState(() {
+        _prefs = p;
+        _cargando = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _cargando = false);
+    }
+  }
+
+  void _actualizar(UserPreferences nuevas) {
+    setState(() => _prefs = nuevas);
+    _repo.save(nuevas).catchError((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo guardar la preferencia')),
+      );
+    });
+  }
+
+  TimeOfDay get _horaNotificacionTOD {
+    final partes = _prefs.horaNotificacion.split(':');
+    final h = int.tryParse(partes.isNotEmpty ? partes[0] : '') ?? 8;
+    final m = int.tryParse(partes.length > 1 ? partes[1] : '') ?? 0;
+    return TimeOfDay(hour: h, minute: m);
+  }
+
+  String _formatTimeOfDay(TimeOfDay t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _titulo(),
-            const SizedBox(height: 16),
-            _seccion('Disponibilidad horaria', [
-              _horasEstudio(),
-              const SizedBox(height: 14),
-              _diasDisponibles(),
-              const SizedBox(height: 14),
-              _horarioPreferente(),
-            ]),
-            const SizedBox(height: 12),
-            _seccion('Notificaciones', [
-              _toggle(
-                'Recordatorio de sesiones de estudio',
-                _recordatorioSesiones,
-                (value) => setState(() => _recordatorioSesiones = value),
+        child: _cargando
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _titulo(),
+                  const SizedBox(height: 16),
+                  _seccion('Disponibilidad horaria', [
+                    _horasEstudio(),
+                    const SizedBox(height: 14),
+                    _diasDisponibles(),
+                    const SizedBox(height: 14),
+                    _horarioPreferente(),
+                  ]),
+                  const SizedBox(height: 12),
+                  _seccion('Notificaciones', [
+                    _toggle(
+                      'Recordatorio de sesiones de estudio',
+                      _prefs.recordatorioSesiones,
+                      (v) => _actualizar(
+                        _prefs.copyWith(recordatorioSesiones: v),
+                      ),
+                    ),
+                    _toggle(
+                      'Alertas de evaluaciones próximas',
+                      _prefs.alertasEvaluaciones,
+                      (v) => _actualizar(
+                        _prefs.copyWith(alertasEvaluaciones: v),
+                      ),
+                    ),
+                    _toggle(
+                      'Indicador de riesgo académico',
+                      _prefs.riesgoAcademico,
+                      (v) => _actualizar(
+                        _prefs.copyWith(riesgoAcademico: v),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _horaNotificaciones(),
+                  ]),
+                  const SizedBox(height: 12),
+                ],
               ),
-              _toggle(
-                'Alertas de evaluaciones próximas',
-                _alertasEvaluaciones,
-                (value) => setState(() => _alertasEvaluaciones = value),
-              ),
-              _toggle(
-                'Indicador de riesgo académico',
-                _riesgoAcademico,
-                (value) => setState(() => _riesgoAcademico = value),
-              ),
-              const SizedBox(height: 10),
-              _horaNotificaciones(),
-            ]),
-            const SizedBox(height: 12),
-          ],
-        ),
       ),
     );
   }
@@ -94,14 +142,14 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             titulo.toUpperCase(),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.8,
@@ -118,7 +166,7 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
   Widget _horasEstudio() {
     return Row(
       children: [
-        Text(
+        const Text(
           'Horas de estudio por día',
           style: TextStyle(fontSize: 13, color: _gris),
         ),
@@ -126,9 +174,13 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
         Row(
           children: [
             IconButton(
-              onPressed: () => setState(() {
-                if (_horasPorDia > 1) _horasPorDia--;
-              }),
+              onPressed: () {
+                if (_prefs.horasPorDia > 1) {
+                  _actualizar(
+                    _prefs.copyWith(horasPorDia: _prefs.horasPorDia - 1),
+                  );
+                }
+              },
               icon: const Icon(Icons.remove, size: 16),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -136,7 +188,7 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                '$_horasPorDia',
+                '${_prefs.horasPorDia}',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
@@ -144,9 +196,13 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
               ),
             ),
             IconButton(
-              onPressed: () => setState(() {
-                if (_horasPorDia < 12) _horasPorDia++;
-              }),
+              onPressed: () {
+                if (_prefs.horasPorDia < 12) {
+                  _actualizar(
+                    _prefs.copyWith(horasPorDia: _prefs.horasPorDia + 1),
+                  );
+                }
+              },
               icon: const Icon(Icons.add, size: 16),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -158,30 +214,43 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
   }
 
   Widget _diasDisponibles() {
+    final entradas = <(String, bool, UserPreferences Function(bool))>[
+      ('L', _prefs.diaLunes, (v) => _prefs.copyWith(diaLunes: v)),
+      ('M', _prefs.diaMartes, (v) => _prefs.copyWith(diaMartes: v)),
+      ('X', _prefs.diaMiercoles, (v) => _prefs.copyWith(diaMiercoles: v)),
+      ('J', _prefs.diaJueves, (v) => _prefs.copyWith(diaJueves: v)),
+      ('V', _prefs.diaViernes, (v) => _prefs.copyWith(diaViernes: v)),
+      ('S', _prefs.diaSabado, (v) => _prefs.copyWith(diaSabado: v)),
+      ('D', _prefs.diaDomingo, (v) => _prefs.copyWith(diaDomingo: v)),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Días disponibles', style: TextStyle(fontSize: 13, color: _gris)),
+        const Text(
+          'Días disponibles',
+          style: TextStyle(fontSize: 13, color: _gris),
+        ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: _dias.entries.map((entry) {
+          children: entradas.map((e) {
+            final (letra, activo, mutator) = e;
             return GestureDetector(
-              onTap: () => setState(() => _dias[entry.key] = !entry.value),
+              onTap: () => _actualizar(mutator(!activo)),
               child: Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: entry.value ? _azul : Colors.transparent,
+                  color: activo ? _azul : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
                   child: Text(
-                    entry.key,
+                    letra,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: entry.value ? Colors.white : _gris,
+                      color: activo ? Colors.white : _gris,
                     ),
                   ),
                 ),
@@ -194,31 +263,30 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
   }
 
   Widget _horarioPreferente() {
-    const opciones = [
-      'Mañana (6AM - 12PM)',
-      'Tarde (12PM - 6PM)',
-      'Noche (6PM - 12AM)',
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Horario preferente',
           style: TextStyle(fontSize: 13, color: _gris),
         ),
         const SizedBox(height: 6),
-        DropdownButton(
-          value: _horario,
+        DropdownButton<String>(
+          value: _prefs.horarioPreferente,
           isExpanded: true,
-          items: opciones
+          items: _opcionesHorario.entries
               .map(
-                (opcion) => DropdownMenuItem(
-                  value: opcion,
-                  child: Text(opcion, style: const TextStyle(fontSize: 13)),
+                (e) => DropdownMenuItem(
+                  value: e.key,
+                  child: Text(e.value, style: const TextStyle(fontSize: 13)),
                 ),
               )
               .toList(),
-          onChanged: (value) => setState(() => _horario = value ?? ""),
+          onChanged: (value) {
+            if (value != null) {
+              _actualizar(_prefs.copyWith(horarioPreferente: value));
+            }
+          },
         ),
       ],
     );
@@ -239,7 +307,7 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
   Widget _horaNotificaciones() {
     return Row(
       children: [
-        Text(
+        const Text(
           'Hora para notificaciones',
           style: TextStyle(fontSize: 13, color: _gris),
         ),
@@ -248,13 +316,17 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
           onPressed: () async {
             final time = await showTimePicker(
               context: context,
-              initialTime: _horaNotificacion,
+              initialTime: _horaNotificacionTOD,
             );
-            if (time != null) setState(() => _horaNotificacion = time);
+            if (time != null) {
+              _actualizar(
+                _prefs.copyWith(horaNotificacion: _formatTimeOfDay(time)),
+              );
+            }
           },
           icon: const Icon(Icons.schedule, size: 16),
           label: Text(
-            _horaNotificacion.format(context),
+            _horaNotificacionTOD.format(context),
             style: const TextStyle(fontSize: 13),
           ),
         ),
