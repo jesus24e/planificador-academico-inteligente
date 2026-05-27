@@ -117,64 +117,10 @@ class _ContadorSesionDialogState extends State<ContadorSesionDialog> {
   }
 
   Future<void> _editarDuracion() async {
-    final restanteMin = (_segundosRestantes / 60).ceil();
+    final restanteMin = (_segundosRestantes / 60).ceil().clamp(1, 9999);
     final nuevoMin = await showDialog<int>(
       context: context,
-      builder: (ctx) {
-        int valor = restanteMin.clamp(1, 600);
-        return StatefulBuilder(
-          builder: (_, setLocal) => AlertDialog(
-            title: const Text("Editar tiempo"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Solo cambia el tiempo de esta corrida. "
-                  "La sesión planificada queda igual.",
-                  style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed:
-                          valor > 1 ? () => setLocal(() => valor--) : null,
-                      icon: const Icon(Icons.remove_circle_outline),
-                    ),
-                    SizedBox(
-                      width: 90,
-                      child: Text(
-                        '$valor min',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => setLocal(() => valor++),
-                      icon: const Icon(Icons.add_circle_outline),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text("Cancelar"),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, valor),
-                child: const Text("Aceptar"),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (_) => _EditarTiempoDialog(minutosIniciales: restanteMin),
     );
 
     if (nuevoMin == null) return;
@@ -453,6 +399,106 @@ class _ContadorSesionDialogState extends State<ContadorSesionDialog> {
               child: const Text("Salir"),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _EditarTiempoDialog extends StatefulWidget {
+  final int minutosIniciales;
+
+  const _EditarTiempoDialog({required this.minutosIniciales});
+
+  @override
+  State<_EditarTiempoDialog> createState() => _EditarTiempoDialogState();
+}
+
+class _EditarTiempoDialogState extends State<_EditarTiempoDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        TextEditingController(text: widget.minutosIniciales.toString());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  int? get _parsed => int.tryParse(_controller.text.trim());
+  bool get _valido => (_parsed ?? 0) > 0;
+
+  void _aceptar() {
+    if (_valido) Navigator.pop(context, _parsed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Editar tiempo"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "Solo cambia el tiempo de esta corrida. "
+            "La sesión planificada queda igual.",
+            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(4),
+                  ],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 12,
+                    ),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                  onSubmitted: (_) => _aceptar(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                "mins",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancelar"),
+        ),
+        ElevatedButton(
+          onPressed: _valido ? _aceptar : null,
+          child: const Text("Aceptar"),
         ),
       ],
     );
