@@ -1,3 +1,4 @@
+import 'package:planificador_academico_inteligente/core/services/notification_service.dart';
 import 'package:planificador_academico_inteligente/core/services/plan_estudio_generator.dart';
 import 'package:planificador_academico_inteligente/data/repositories/activity_repository.dart';
 import 'package:planificador_academico_inteligente/data/repositories/study_session_repository.dart';
@@ -42,6 +43,8 @@ class PlanEstudioService {
       await _sessionRepo.insertMany(result.sesiones);
     }
 
+    await NotificationService().reprogramarTodo();
+
     return result.advertencias;
   }
 
@@ -58,6 +61,7 @@ class PlanEstudioService {
         await _sessionRepo.update(s);
       }
     }
+    await NotificationService().reprogramarTodo();
   }
 
   Future<void> quitarTareaDelPlan(int actividadId) async {

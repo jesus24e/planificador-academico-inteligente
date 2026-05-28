@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/core/services/notification_service.dart';
 import 'package:planificador_academico_inteligente/ui/screens/actividades/activities_screen.dart';
 import 'package:planificador_academico_inteligente/ui/screens/ajustes/settings_screen.dart';
 import 'package:planificador_academico_inteligente/ui/screens/calendario/calendar_screen.dart';
@@ -24,6 +25,18 @@ class _MainScaffoldState extends State<MainScaffold> {
     HomeScreen(key: _homeKey),
     const SettingsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setupNotificaciones());
+  }
+
+  Future<void> _setupNotificaciones() async {
+    final service = NotificationService();
+    await service.pedirPermisos();
+    await service.reprogramarTodo();
+  }
 
   void _onTabChanged(int index) {
     setState(() => _currentIndex = index);

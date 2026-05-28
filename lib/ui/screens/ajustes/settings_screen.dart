@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:planificador_academico_inteligente/core/services/notification_service.dart';
 import 'package:planificador_academico_inteligente/data/repositories/user_preferences_repository.dart';
 import 'package:planificador_academico_inteligente/entities/user_preferences.dart';
 
@@ -46,7 +47,9 @@ class _ConfiguracionScreenState extends State<SettingsScreen> {
 
   void _actualizar(UserPreferences nuevas) {
     setState(() => _prefs = nuevas);
-    _repo.save(nuevas).catchError((_) {
+    _repo.save(nuevas).then((_) {
+      NotificationService().reprogramarTodo();
+    }).catchError((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo guardar la preferencia')),

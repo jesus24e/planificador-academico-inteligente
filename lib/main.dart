@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:planificador_academico_inteligente/core/services/notification_service.dart';
 import 'package:planificador_academico_inteligente/core/simulations/actividades_sim.dart';
 import 'package:planificador_academico_inteligente/core/simulations/materias_sim.dart';
 import 'package:planificador_academico_inteligente/data/database/database_helper.dart';
@@ -19,6 +20,8 @@ void main() async {
   await DatabaseHelper.instance.database;
   await seedSubjectsIfEmpty();
   await seedIfEmpty();
+
+  await NotificationService().init(navigatorKey: appNavigatorKey);
 
   runApp(const MyApp());
 }
